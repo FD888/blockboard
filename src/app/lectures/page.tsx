@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Лекции",
-  description: "Каталог лекций по блокчейну — BlockBoard, СПбГУ",
+  description: "Каталог лекций по блокчейну — BlockBoard",
 };
 
 export default function LecturesPage() {

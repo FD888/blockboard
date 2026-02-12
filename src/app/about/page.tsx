@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "О курсе",
   description:
-    "О дисциплине «Технология блокчейн в экономике и финансах» — СПбГУ",
+    "О дисциплине «Технология блокчейн в экономике и финансах» — BlockBoard",
 };
 
 export default function AboutPage() {

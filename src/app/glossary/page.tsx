@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Глоссарий",
-  description: "Глоссарий блокчейн-терминов — BlockBoard, СПбГУ",
+  description: "Глоссарий блокчейн-терминов — BlockBoard",
 };
 
 export default function GlossaryPage() {

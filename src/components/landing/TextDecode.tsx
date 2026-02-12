@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useInView } from "framer-motion";
 
 const HEX_CHARS = "0123456789ABCDEF";
 
@@ -13,6 +14,8 @@ interface TextDecodeProps {
   onComplete?: () => void;
   /** If true, starts the animation. If false, shows nothing until triggered. */
   trigger?: boolean;
+  /** If true, triggers decode when element scrolls into viewport center (85%) */
+  scrollTriggered?: boolean;
 }
 
 export function TextDecode({
@@ -22,6 +25,7 @@ export function TextDecode({
   speed = 50,
   onComplete,
   trigger = true,
+  scrollTriggered = false,
 }: TextDecodeProps) {
   const [displayText, setDisplayText] = useState<string>("");
   const [isStarted, setIsStarted] = useState(false);
@@ -29,6 +33,15 @@ export function TextDecode({
   const resolvedCount = useRef(0);
   const rafId = useRef<number>(0);
   const lastTime = useRef(0);
+  const elementRef = useRef<HTMLSpanElement>(null);
+
+  // Scroll-triggered: fire when element enters the central 85% of viewport
+  const isInView = useInView(elementRef, {
+    once: true,
+    margin: "-8% 0px -8% 0px",
+  });
+
+  const effectiveTrigger = scrollTriggered ? isInView : trigger;
 
   const scramble = useCallback(
     (resolved: number): string => {
@@ -44,8 +57,15 @@ export function TextDecode({
     [text]
   );
 
+  // Show scrambled text before decode starts (for scroll-triggered mode)
   useEffect(() => {
-    if (!trigger) return;
+    if (scrollTriggered && !isStarted && !isDone) {
+      setDisplayText(scramble(0));
+    }
+  }, [scrollTriggered, isStarted, isDone, scramble]);
+
+  useEffect(() => {
+    if (!effectiveTrigger || isStarted) return;
 
     const timeout = setTimeout(() => {
       setIsStarted(true);
@@ -54,7 +74,7 @@ export function TextDecode({
     }, delay);
 
     return () => clearTimeout(timeout);
-  }, [trigger, delay]);
+  }, [effectiveTrigger, delay, isStarted]);
 
   useEffect(() => {
     if (!isStarted || isDone) return;
@@ -62,10 +82,8 @@ export function TextDecode({
     const animate = (now: number) => {
       const elapsed = now - lastTime.current;
 
-      // Update scramble every frame for smooth randomness
       setDisplayText(scramble(resolvedCount.current));
 
-      // Resolve next character at the speed interval
       if (elapsed >= speed) {
         resolvedCount.current++;
         lastTime.current = now;
@@ -88,19 +106,28 @@ export function TextDecode({
     };
   }, [isStarted, isDone, text, speed, scramble, onComplete]);
 
-  if (!trigger && !isStarted) {
+  // Before trigger: show scrambled (scroll mode) or invisible (manual mode)
+  if (!effectiveTrigger && !isStarted) {
+    if (scrollTriggered) {
+      return (
+        <span ref={elementRef} className={className} aria-label={text}>
+          <span className="sr-only">{text}</span>
+          <span aria-hidden="true" className="font-mono">
+            {displayText || scramble(0)}
+          </span>
+        </span>
+      );
+    }
     return (
-      <span className={className} aria-label={text}>
+      <span ref={elementRef} className={className} aria-label={text}>
         <span className="invisible">{text}</span>
       </span>
     );
   }
 
   return (
-    <span className={className} aria-label={text}>
-      {/* Screen reader sees the real text immediately */}
+    <span ref={elementRef} className={className} aria-label={text}>
       <span className="sr-only">{text}</span>
-      {/* Visual: animated decode */}
       <span aria-hidden="true" className="font-mono">
         {displayText || "\u00A0".repeat(text.length)}
       </span>

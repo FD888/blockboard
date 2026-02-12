@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
+import { TextDecode } from "./TextDecode";
 
 const lectures = [
   { id: 1, title: "Введение в блокчейн", hash: "a1b2c3d4" },
@@ -92,7 +93,11 @@ export function LectureChain() {
             Blockchain of knowledge
           </p>
           <h2 className="text-fluid-2xl font-bold text-slate-100">
-            Цепочка лекций
+            <TextDecode
+              text="Цепочка лекций"
+              scrollTriggered
+              speed={30}
+            />
           </h2>
         </motion.div>
 

@@ -2,6 +2,7 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import { TextDecode } from "./TextDecode";
 
 const steps = [
   {
@@ -156,7 +157,11 @@ export function PipelineSection() {
             How it works
           </p>
           <h2 className="text-fluid-2xl font-bold text-slate-100">
-            От лекции до блока за 3 шага
+            <TextDecode
+              text="От лекции до блока за 3 шага"
+              scrollTriggered
+              speed={25}
+            />
           </h2>
         </motion.div>
 
