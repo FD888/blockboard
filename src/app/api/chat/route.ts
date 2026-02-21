@@ -100,7 +100,7 @@ async function callGemini(
 
   const genAI = new GoogleGenerativeAI(apiKey)
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     // @ts-expect-error: tools type mismatch in SDK version
     tools: TOOLS,
     systemInstruction: systemPrompt,
