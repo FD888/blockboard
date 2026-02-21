@@ -9,6 +9,7 @@ const navLinks = [
   { href: "/lectures", label: "Лекции" },
   { href: "/glossary", label: "Глоссарий" },
   { href: "/about", label: "О курсе" },
+  { href: "/bot", label: "🐹 Ходлер" },
 ] as const;
 
 export function Header() {
@@ -84,9 +85,13 @@ export function Header() {
                 <Link
                   href={link.href}
                   className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    isActive(link.href)
-                      ? "text-primary bg-primary/10"
-                      : "text-slate-300 hover:text-slate-100 hover:bg-surface-light"
+                    link.href === "/bot"
+                      ? isActive(link.href)
+                        ? "text-yellow-300 bg-yellow-500/20 border border-yellow-500/30"
+                        : "text-yellow-400/80 hover:text-yellow-300 hover:bg-yellow-500/10 border border-yellow-500/20"
+                      : isActive(link.href)
+                        ? "text-primary bg-primary/10"
+                        : "text-slate-300 hover:text-slate-100 hover:bg-surface-light"
                   }`}
                   aria-current={isActive(link.href) ? "page" : undefined}
                 >
@@ -160,9 +165,13 @@ export function Header() {
                 <Link
                   href={link.href}
                   className={`block px-4 py-3 rounded-xl text-lg font-medium transition-colors duration-200 ${
-                    isActive(link.href)
-                      ? "text-primary bg-primary/10 border border-primary/20"
-                      : "text-slate-300 hover:text-slate-100 hover:bg-surface-light"
+                    link.href === "/bot"
+                      ? isActive(link.href)
+                        ? "text-yellow-300 bg-yellow-500/20 border border-yellow-500/30"
+                        : "text-yellow-400/80 hover:text-yellow-300 hover:bg-yellow-500/10 border border-yellow-500/20"
+                      : isActive(link.href)
+                        ? "text-primary bg-primary/10 border border-primary/20"
+                        : "text-slate-300 hover:text-slate-100 hover:bg-surface-light"
                   }`}
                   aria-current={isActive(link.href) ? "page" : undefined}
                   onClick={() => setIsMobileMenuOpen(false)}
