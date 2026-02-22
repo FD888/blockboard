@@ -1,31 +1,36 @@
-import { createHmac } from 'crypto'
 import type { NextRequest } from 'next/server'
+import { verifyToken } from '@/lib/tokens'
 
-// ─── HODL coin verification ───────────────────────────────────────────────────
-// Teachers use this endpoint to verify student-submitted HODL coins.
-
-const HODL_SECRET = process.env.HODL_SECRET ?? 'hodl-blockboard-default-dev'
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface VerifyRequest {
+  /** Одиночная монета */
+  coin?: string
+  /** Пакетная верификация для преподавателя */
+  coins?: string[]
+}
+
+export interface SingleVerifyResult {
   coin: string
-  topic: string
-  pct: number
+  valid: boolean
+  category?: 'quiz' | 'explain'
+  score?: number          // % для quiz
+  nonce?: string          // уникальный идентификатор — дубли видны сразу
+  duplicate?: boolean     // true если nonce уже встречался в батче
 }
 
 export interface VerifyResponse {
-  valid: boolean
-  topic?: string
-  pct?: number
+  /** Результат одиночной проверки */
+  valid?: boolean
+  category?: 'quiz' | 'explain'
+  score?: number
+  nonce?: string
+  /** Результаты пакетной проверки */
+  results?: SingleVerifyResult[]
   error?: string
 }
 
-function expectedCoin(topic: string, pct: number): string {
-  const normalised = topic.trim().toLowerCase()
-  const hmac = createHmac('sha256', HODL_SECRET)
-    .update(`${normalised}|${pct}`)
-    .digest('hex')
-  return `HODL-${hmac.substring(0, 16).toUpperCase()}`
-}
+// ─── Handler ──────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   let body: VerifyRequest
@@ -35,36 +40,65 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Некорректный запрос.' }, { status: 400 })
   }
 
-  const { coin, topic, pct } = body
+  // ── Пакетная верификация (для преподавателя) ───────────────────────────────
+  if (body.coins) {
+    if (!Array.isArray(body.coins) || body.coins.length > 500) {
+      return Response.json({ error: 'coins — массив до 500 элементов.' }, { status: 400 })
+    }
 
-  if (!coin || !topic || typeof pct !== 'number') {
-    return Response.json({ error: 'Неверные параметры.' }, { status: 400 })
+    const seenNonces = new Set<string>()
+    const results: SingleVerifyResult[] = body.coins.map((raw) => {
+      const coin = String(raw).trim()
+      const result = verifyToken(coin)
+
+      if (!result.valid) {
+        return { coin, valid: false }
+      }
+
+      const isDuplicate = result.nonce ? seenNonces.has(result.nonce) : false
+      if (result.nonce) seenNonces.add(result.nonce)
+
+      return {
+        coin,
+        valid: true,
+        category: result.category,
+        score: result.score,
+        nonce: result.nonce,
+        duplicate: isDuplicate,
+      }
+    })
+
+    return Response.json({ results } satisfies VerifyResponse)
   }
 
-  const computed = expectedCoin(topic, pct)
-  const valid = coin.toUpperCase() === computed
+  // ── Одиночная верификация ──────────────────────────────────────────────────
+  if (body.coin) {
+    const result = verifyToken(String(body.coin).trim())
+    return Response.json({
+      valid: result.valid,
+      category: result.category,
+      score: result.score,
+      nonce: result.nonce,
+    } satisfies VerifyResponse)
+  }
 
-  return Response.json({ valid, topic: valid ? topic : undefined, pct: valid ? pct : undefined } satisfies VerifyResponse)
+  return Response.json({ error: 'Передай coin или coins[].' }, { status: 400 })
 }
 
-// Also support GET for quick verification via URL params (for teacher convenience)
+// ── GET: быстрая проверка через URL для удобства преподавателя ─────────────
+// Пример: /api/verify?coin=HK1:a3f9b2c1:quiz-90:7e4cd1f2a9b3
+
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const coin = searchParams.get('coin')
-  const topic = searchParams.get('topic')
-  const pctStr = searchParams.get('pct')
-
-  if (!coin || !topic || !pctStr) {
-    return Response.json({ error: 'Параметры: coin, topic, pct' }, { status: 400 })
+  const coin = new URL(req.url).searchParams.get('coin')
+  if (!coin) {
+    return Response.json({ error: 'Параметр: ?coin=HK1:...' }, { status: 400 })
   }
 
-  const pct = parseInt(pctStr, 10)
-  if (isNaN(pct)) {
-    return Response.json({ error: 'pct должен быть числом' }, { status: 400 })
-  }
-
-  const computed = expectedCoin(topic, pct)
-  const valid = coin.toUpperCase() === computed
-
-  return Response.json({ valid, topic: valid ? topic : undefined, pct: valid ? pct : undefined } satisfies VerifyResponse)
+  const result = verifyToken(coin.trim())
+  return Response.json({
+    valid: result.valid,
+    category: result.category,
+    score: result.score,
+    nonce: result.nonce,
+  } satisfies VerifyResponse)
 }

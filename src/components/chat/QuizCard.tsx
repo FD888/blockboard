@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { QuizAction } from '@/types/chat'
+import type { QuizAction, HodlCoin } from '@/types/chat'
 
 interface QuizCardProps {
   action: QuizAction
@@ -10,24 +10,26 @@ interface QuizCardProps {
 
 // ─── Wallet helpers (localStorage) ────────────────────────────────────────────
 
-export interface HodlCoin {
-  coin: string
-  topic: string
-  pct: number
-  date: string
-}
-
 export function saveHodlCoin(entry: HodlCoin) {
   try {
-    const raw = localStorage.getItem('hodl_wallet')
+    const raw = localStorage.getItem('hk_wallet')
     const wallet: HodlCoin[] = raw ? JSON.parse(raw) : []
-    // Avoid duplicates by coin value
+    // Дубли по coin не добавляем
     if (!wallet.some((c) => c.coin === entry.coin)) {
       wallet.unshift(entry)
-      localStorage.setItem('hodl_wallet', JSON.stringify(wallet))
+      localStorage.setItem('hk_wallet', JSON.stringify(wallet))
     }
   } catch {
-    // localStorage unavailable (SSR / private mode) — silently skip
+    // localStorage недоступен (SSR / private mode)
+  }
+}
+
+export function readWallet(): HodlCoin[] {
+  try {
+    const raw = localStorage.getItem('hk_wallet')
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
   }
 }
 
@@ -40,9 +42,9 @@ export function QuizCard({ action }: QuizCardProps) {
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
 
-  // Mint state
   const [mintState, setMintState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [mintedCoin, setMintedCoin] = useState<string | null>(null)
+  const [mintedLabel, setMintedLabel] = useState<string | null>(null)
   const [mintError, setMintError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
@@ -57,9 +59,7 @@ export function QuizCard({ action }: QuizCardProps) {
   function handleReveal() {
     if (selected === null) return
     setRevealed(true)
-    if (selected === question.correct) {
-      setScore((s) => s + 1)
-    }
+    if (selected === question.correct) setScore((s) => s + 1)
   }
 
   function handleNext() {
@@ -80,6 +80,7 @@ export function QuizCard({ action }: QuizCardProps) {
     setFinished(false)
     setMintState('idle')
     setMintedCoin(null)
+    setMintedLabel(null)
     setMintError(null)
     setCopied(false)
   }
@@ -91,17 +92,20 @@ export function QuizCard({ action }: QuizCardProps) {
       const res = await fetch('/api/mint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: action.topic, score: finalScore, total }),
+        body: JSON.stringify({ activity: 'quiz', topic: action.topic, score: finalScore, total }),
       })
       const data = await res.json()
       if (!res.ok || data.error) {
-        setMintError(data.error ?? 'Ошибка минтинга')
+        setMintError(data.error ?? 'Ошибка выдачи токена')
         setMintState('error')
         return
       }
       setMintedCoin(data.coin)
+      setMintedLabel(data.label)
       setMintState('done')
-      saveHodlCoin({ coin: data.coin, topic: data.topic, pct: data.pct, date: data.date })
+      saveHodlCoin({ coin: data.coin, label: data.label, date: data.date })
+      // Уведомить кошелёк
+      window.dispatchEvent(new StorageEvent('storage', { key: 'hk_wallet' }))
     } catch {
       setMintError('Не удалось связаться с сервером.')
       setMintState('error')
@@ -123,7 +127,9 @@ export function QuizCard({ action }: QuizCardProps) {
     const pct = Math.round((score / total) * 100)
     const passed = pct >= 70
     const grade =
-      pct >= 80 ? 'Отлично! 🎉' : pct >= 70 ? 'Хорошо! 👍' : pct >= 60 ? 'Неплохо 👌' : 'Попробуй ещё раз 💪'
+      pct >= 90 ? '🎖 Отлично!' :
+      pct >= 70 ? 'Хорошо. Принято.' :
+      pct >= 50 ? 'Слабовато. Ещё раз.' : 'Провал. Разбор полётов — и снова в бой.'
 
     return (
       <motion.div
@@ -131,15 +137,13 @@ export function QuizCard({ action }: QuizCardProps) {
         animate={{ opacity: 1, y: 0 }}
         className="mt-3 rounded-xl border border-secondary/30 bg-secondary/5 p-4"
       >
-        {/* Score */}
         <div className="text-center">
-          <p className="text-lg font-bold text-white">{grade}</p>
+          <p className="text-base font-bold text-white">{grade}</p>
           <p className="mt-1 text-sm text-gray-300">
-            Правильных ответов: {score} из {total} ({pct}%)
+            {score} из {total} ({pct}%)
           </p>
         </div>
 
-        {/* Mint section */}
         {passed && mintState === 'idle' && (
           <motion.div
             initial={{ opacity: 0, y: 6 }}
@@ -148,20 +152,20 @@ export function QuizCard({ action }: QuizCardProps) {
             className="mt-4 rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3"
           >
             <p className="text-xs text-yellow-300/90">
-              🐾 Ты набрал ≥70%! Ходлер одобряет. Получи HODL-монетку — запиши её в кошелёк.
+              Порог пройден. Получи токен — сохрани в кошелёк.
             </p>
             <button
               onClick={() => handleMint(score)}
               className="mt-2 w-full rounded-lg bg-yellow-500/20 px-4 py-2 text-sm font-semibold text-yellow-300 transition-all hover:bg-yellow-500/30 active:scale-95"
             >
-              💰 Получить монетку
+              🎖 Получить токен
             </button>
           </motion.div>
         )}
 
         {mintState === 'loading' && (
           <div className="mt-4 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-3 text-center">
-            <p className="text-xs text-yellow-300/70 animate-pulse">🐹 Майним монетку... крутим колесо...</p>
+            <p className="text-xs text-yellow-300/70 animate-pulse">Выдаём токен...</p>
           </div>
         )}
 
@@ -171,7 +175,9 @@ export function QuizCard({ action }: QuizCardProps) {
             animate={{ opacity: 1, scale: 1 }}
             className="mt-4 rounded-lg border border-yellow-400/40 bg-yellow-500/10 p-3"
           >
-            <p className="text-xs font-semibold text-yellow-300 mb-1">🎖 Твоя HODL-монетка:</p>
+            <p className="text-xs font-semibold text-yellow-300 mb-1">
+              🎖 Токен выдан · {mintedLabel}
+            </p>
             <div className="flex items-center gap-2">
               <code className="flex-1 break-all rounded bg-black/30 px-2 py-1.5 font-mono text-xs text-yellow-200">
                 {mintedCoin}
@@ -194,7 +200,7 @@ export function QuizCard({ action }: QuizCardProps) {
               </button>
             </div>
             <p className="mt-1.5 text-[10px] text-yellow-300/50">
-              Сохрани монетку — покажи Ходлеру на странице кошелька или преподавателю.
+              Сохранено в кошелёк. Покажи преподавателю для зачёта.
             </p>
           </motion.div>
         )}
@@ -205,7 +211,6 @@ export function QuizCard({ action }: QuizCardProps) {
           </div>
         )}
 
-        {/* Restart */}
         <button
           onClick={handleRestart}
           className="mt-3 rounded-lg border border-secondary/40 px-4 py-1.5 text-sm text-secondary transition-colors hover:bg-secondary/10"
@@ -222,56 +227,36 @@ export function QuizCard({ action }: QuizCardProps) {
       animate={{ opacity: 1, y: 0 }}
       className="mt-3 rounded-xl border border-white/10 bg-surface/60 p-4"
     >
-      {/* Header */}
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs font-medium text-secondary">
-          {action.topic}
-        </span>
-        <span className="font-mono text-xs text-gray-500">
-          {current + 1} / {total}
-        </span>
+        <span className="text-xs font-medium text-secondary">{action.topic}</span>
+        <span className="font-mono text-xs text-gray-500">{current + 1} / {total}</span>
       </div>
 
-      {/* Question */}
-      <p className="mb-3 text-sm font-medium leading-relaxed text-white">
-        {question.question}
-      </p>
+      <p className="mb-3 text-sm font-medium leading-relaxed text-white">{question.question}</p>
 
-      {/* Options */}
       <div className="space-y-2">
         {question.options.map((opt, idx) => {
-          let variantClass =
-            'border-white/10 bg-white/5 text-gray-300 hover:border-white/30 hover:bg-white/10'
-
+          let cls = 'border-white/10 bg-white/5 text-gray-300 hover:border-white/30 hover:bg-white/10'
           if (revealed) {
-            if (idx === question.correct) {
-              variantClass = 'border-green-500/50 bg-green-500/10 text-green-300'
-            } else if (idx === selected) {
-              variantClass = 'border-red-500/50 bg-red-500/10 text-red-300'
-            } else {
-              variantClass = 'border-white/5 bg-white/5 text-gray-500'
-            }
+            if (idx === question.correct) cls = 'border-green-500/50 bg-green-500/10 text-green-300'
+            else if (idx === selected) cls = 'border-red-500/50 bg-red-500/10 text-red-300'
+            else cls = 'border-white/5 bg-white/5 text-gray-500'
           } else if (idx === selected) {
-            variantClass =
-              'border-secondary/60 bg-secondary/10 text-white'
+            cls = 'border-secondary/60 bg-secondary/10 text-white'
           }
-
           return (
             <button
               key={idx}
               onClick={() => handleSelect(idx)}
-              className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition-all ${variantClass}`}
+              className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition-all ${cls}`}
             >
-              <span className="font-mono mr-2 text-xs opacity-60">
-                {String.fromCharCode(65 + idx)}.
-              </span>
+              <span className="font-mono mr-2 text-xs opacity-60">{String.fromCharCode(65 + idx)}.</span>
               {opt}
             </button>
           )
         })}
       </div>
 
-      {/* Explanation */}
       <AnimatePresence>
         {revealed && (
           <motion.p
@@ -284,7 +269,6 @@ export function QuizCard({ action }: QuizCardProps) {
         )}
       </AnimatePresence>
 
-      {/* Actions */}
       <div className="mt-3 flex gap-2">
         {!revealed ? (
           <button

@@ -7,14 +7,15 @@ import type { ChatMessage, ChatRequest, ChatResponse } from '@/types/chat'
 import { ChatMessage as ChatMessageComponent, TypingIndicator } from '@/components/chat/ChatMessage'
 import { ChatInput } from '@/components/chat/ChatInput'
 import { BotWallet } from './BotWallet'
+import { readWallet } from '@/components/chat/QuizCard'
 
 // ─── Quick actions ─────────────────────────────────────────────────────────────
 
 const QUICK_ACTIONS = [
-  { label: '🎯 Квиз на монетку', prompt: 'Составь квиз из 4 вопросов по блокчейну, чтобы я мог получить HODL-монетку' },
-  { label: '📖 Объясни блокчейн', prompt: 'Объясни принцип работы блокчейна максимально понятно' },
+  { label: '🎯 Квиз на токен', prompt: 'Составь квиз из 4 вопросов по блокчейну, чтобы я мог получить токен' },
+  { label: '🧠 Объясни ХК понятие', prompt: 'Хочу объяснить тебе понятие из блокчейна и получить токен. С чего начнём?' },
   { label: '⚡ Что такое консенсус?', prompt: 'Что такое консенсус-механизм? Объясни PoW и PoS' },
-  { label: '💡 Зачем это нужно?', prompt: 'Какие реальные проблемы решает блокчейн в экономике?' },
+  { label: '💡 Зачем нужен блокчейн?', prompt: 'Какие реальные проблемы решает блокчейн в экономике?' },
 ]
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -23,80 +24,71 @@ function generateId() {
   return Math.random().toString(36).slice(2, 9)
 }
 
-function readWalletCount(): number {
-  try {
-    const raw = localStorage.getItem('hodl_wallet')
-    return raw ? JSON.parse(raw).length : 0
-  } catch {
-    return 0
-  }
-}
+// ─── Hamster Комбат аватар ─────────────────────────────────────────────────────
 
-// ─── Hamster avatar ────────────────────────────────────────────────────────────
-
-function HamsterAvatar({ mood }: { mood: 'idle' | 'thinking' | 'happy' | 'excited' }) {
-  const emoji =
-    mood === 'excited' ? '🐹' :
-    mood === 'happy'   ? '🐹' :
-    mood === 'thinking'? '🐹' : '🐹'
+function HKAvatar({ mood }: { mood: 'idle' | 'thinking' | 'happy' | 'excited' }) {
+  const [imgError, setImgError] = useState(false)
 
   const frames =
     mood === 'excited' ? { y: [0, -10, 0, -10, 0], scale: [1, 1.15, 1, 1.15, 1] } :
-    mood === 'thinking'? { rotate: [-5, 5, -5], scale: [1, 1.05, 1] } :
-    mood === 'happy'   ? { y: [0, -6, 0], scale: [1, 1.1, 1] } :
-                         { y: [0, -3, 0] }
+    mood === 'thinking' ? { rotate: [-3, 3, -3], scale: [1, 1.03, 1] } :
+    mood === 'happy' ? { y: [0, -6, 0], scale: [1, 1.08, 1] } :
+    { y: [0, -3, 0] }
 
   const duration =
-    mood === 'excited'  ? 0.5 :
+    mood === 'excited' ? 0.5 :
     mood === 'thinking' ? 1.2 :
-    mood === 'happy'    ? 0.8 : 3
+    mood === 'happy' ? 0.8 : 3
+
+  const ringColor =
+    mood === 'excited' ? 'rgba(234,179,8,0.6)' :
+    mood === 'happy' ? 'rgba(134,239,172,0.5)' :
+    mood === 'thinking' ? 'rgba(147,207,189,0.4)' :
+    'rgba(234,179,8,0.15)'
+
+  const moodLabel =
+    mood === 'idle' ? 'Жду вводных...' :
+    mood === 'thinking' ? 'Думаю...' :
+    mood === 'happy' ? 'Принято.' : 'Е-моё, молодец!'
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Avatar circle */}
       <div className="relative">
         <motion.div
           animate={frames}
           transition={{ duration, repeat: Infinity, ease: 'easeInOut' }}
-          className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-yellow-500/40 bg-yellow-500/10 text-5xl shadow-lg shadow-yellow-500/10"
+          className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-yellow-500/40 bg-yellow-500/10 shadow-lg shadow-yellow-500/10 overflow-hidden"
         >
-          {emoji}
+          {!imgError ? (
+            <img
+              src="/images/hk-avatar.png"
+              alt="Humster Комбат"
+              className="h-full w-full object-cover"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <span className="text-5xl">🐹</span>
+          )}
         </motion.div>
-        {/* Mood ring */}
         <motion.div
           className="absolute inset-0 rounded-full border-2"
-          animate={{
-            borderColor:
-              mood === 'excited'  ? 'rgba(234,179,8,0.6)' :
-              mood === 'happy'    ? 'rgba(134,239,172,0.5)' :
-              mood === 'thinking' ? 'rgba(147,207,189,0.4)' :
-                                    'rgba(234,179,8,0.15)',
-            boxShadow:
-              mood === 'excited'  ? '0 0 24px rgba(234,179,8,0.3)' :
-              mood === 'happy'    ? '0 0 20px rgba(134,239,172,0.2)' :
-                                    '0 0 12px rgba(234,179,8,0.1)',
-          }}
+          animate={{ borderColor: ringColor }}
           transition={{ duration: 0.5 }}
         />
       </div>
 
-      {/* Name + title */}
       <div className="text-center">
-        <p className="text-base font-bold text-white">Ходлер</p>
-        <p className="text-xs text-yellow-400/70">Хомяк-профессор блокчейна</p>
+        <p className="text-base font-bold text-white">Humster Комбат</p>
+        <p className="text-xs text-yellow-400/70">позывной «ХК» · курс молодого блокчейнера</p>
       </div>
 
-      {/* Mood label */}
       <motion.p
         key={mood}
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         className="text-xs text-gray-500"
       >
-        {mood === 'idle'     ? 'Жду вопросов...' :
-         mood === 'thinking' ? 'Думаю... 🤔' :
-         mood === 'happy'    ? 'Отлично!' :
-                               'ХОДЛ ХОДЛ ХОДЛ! 🐾'}
+        {moodLabel}
       </motion.p>
     </div>
   )
@@ -113,7 +105,7 @@ function StatsBar({ msgCount, coinCount }: { msgCount: number; coinCount: number
       </div>
       <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3 text-center">
         <p className="text-lg font-bold text-yellow-300">{coinCount}</p>
-        <p className="text-[10px] text-yellow-500/60">монеток</p>
+        <p className="text-[10px] text-yellow-500/60">токенов</p>
       </div>
     </div>
   )
@@ -134,26 +126,20 @@ export function BotPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
 
-  // Count messages from user
   const userMsgCount = messages.filter((m) => m.role === 'user').length
 
-  // Read coin count from localStorage
   useEffect(() => {
-    setCoinCount(readWalletCount())
+    setCoinCount(readWallet().length)
   }, [walletKey])
 
-  // Listen for wallet updates (coin minted in QuizCard)
   useEffect(() => {
     function onStorage(e: StorageEvent) {
-      if (e.key === 'hodl_wallet') {
-        setWalletKey((k) => k + 1)
-      }
+      if (e.key === 'hk_wallet') setWalletKey((k) => k + 1)
     }
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
   }, [])
 
-  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
@@ -177,10 +163,7 @@ export function BotPage() {
 
       try {
         const payload: ChatRequest = {
-          messages: [...messages, userMessage].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
+          messages: [...messages, userMessage].map((m) => ({ role: m.role, content: m.content })),
           context: { page: pathname },
         }
 
@@ -207,18 +190,13 @@ export function BotPage() {
         }
         setMessages((prev) => [...prev, botMessage])
 
-        // Update mood based on response
-        if (data.action?.type === 'quiz') {
+        if (data.action?.type === 'quiz' || data.action?.type === 'award_token') {
           setMood('excited')
           setTimeout(() => setMood('idle'), 3000)
+          setTimeout(() => setWalletKey((k) => k + 1), 1000)
         } else {
           setMood('happy')
           setTimeout(() => setMood('idle'), 2000)
-        }
-
-        // Refresh wallet after quiz actions (coin might have been minted)
-        if (data.action?.type === 'quiz') {
-          setTimeout(() => setWalletKey((k) => k + 1), 5000)
         }
       } catch {
         setError('Не удалось связаться с сервером. Проверь соединение.')
@@ -230,88 +208,66 @@ export function BotPage() {
     [messages, isLoading, pathname],
   )
 
-  function handleSend() {
-    sendMessage(input)
-  }
-
   const showQuickActions = messages.length === 0 && !isLoading
 
   return (
     <div className="flex h-[calc(100dvh-4rem)] md:h-[calc(100dvh-5rem)]">
 
-      {/* ── Left sidebar ── */}
+      {/* ── Сайдбар (desktop) ── */}
       <aside className="hidden w-72 shrink-0 flex-col gap-5 overflow-y-auto border-r border-white/8 bg-[#0a0d1a] p-6 lg:flex">
-        {/* Avatar */}
-        <HamsterAvatar mood={mood} />
-
+        <HKAvatar mood={mood} />
         <div className="h-px bg-white/6" />
-
-        {/* Stats */}
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Статистика</p>
           <StatsBar msgCount={userMsgCount} coinCount={coinCount} />
         </div>
-
         <div className="h-px bg-white/6" />
-
-        {/* Wallet */}
         <div className="flex-1 min-h-0">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">HODL-кошелёк</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Кошелёк</p>
           <BotWallet refreshKey={walletKey} />
         </div>
       </aside>
 
-      {/* ── Main chat area ── */}
+      {/* ── Основная область чата ── */}
       <main className="flex flex-1 flex-col overflow-hidden bg-[#0d1121]">
 
-        {/* Mobile header */}
+        {/* Мобильный хедер */}
         <div className="flex items-center justify-between border-b border-white/8 px-4 py-3 lg:hidden">
           <div className="flex items-center gap-3">
             <span className="text-2xl">🐹</span>
             <div>
-              <p className="text-sm font-bold text-white">Ходлер</p>
-              <p className="text-xs text-yellow-400/60">Хомяк-профессор</p>
+              <p className="text-sm font-bold text-white">Humster Комбат</p>
+              <p className="text-xs text-yellow-400/60">позывной «ХК»</p>
             </div>
           </div>
-          {/* Mobile tabs */}
           <div className="flex rounded-lg border border-white/10 p-0.5">
             <button
               onClick={() => setActiveTab('chat')}
-              className={`rounded-md px-3 py-1 text-xs transition-colors ${
-                activeTab === 'chat'
-                  ? 'bg-white/10 text-white'
-                  : 'text-gray-500 hover:text-gray-300'
-              }`}
+              className={`rounded-md px-3 py-1 text-xs transition-colors ${activeTab === 'chat' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}
             >
               Чат
             </button>
             <button
               onClick={() => setActiveTab('wallet')}
-              className={`rounded-md px-3 py-1 text-xs transition-colors ${
-                activeTab === 'wallet'
-                  ? 'bg-yellow-500/20 text-yellow-300'
-                  : 'text-gray-500 hover:text-gray-300'
-              }`}
+              className={`rounded-md px-3 py-1 text-xs transition-colors ${activeTab === 'wallet' ? 'bg-yellow-500/20 text-yellow-300' : 'text-gray-500 hover:text-gray-300'}`}
             >
               🎒 {coinCount > 0 && <span className="ml-0.5 font-bold">{coinCount}</span>}
             </button>
           </div>
         </div>
 
-        {/* Mobile wallet tab */}
+        {/* Мобильный кошелёк */}
         {activeTab === 'wallet' && (
           <div className="flex-1 overflow-y-auto p-4 lg:hidden">
             <BotWallet refreshKey={walletKey} />
           </div>
         )}
 
-        {/* Chat panel */}
-        {(activeTab === 'chat') && (
+        {/* Чат */}
+        {activeTab === 'chat' && (
           <>
-            {/* Messages */}
             <div className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6 [scrollbar-width:thin]">
 
-              {/* Welcome state */}
               {messages.length === 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
@@ -322,20 +278,27 @@ export function BotPage() {
                     <motion.div
                       animate={{ y: [0, -8, 0] }}
                       transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                      className="text-6xl"
+                      className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-yellow-500/30 bg-yellow-500/10 overflow-hidden"
                     >
-                      🐹
+                      <img
+                        src="/images/hk-avatar.png"
+                        alt="ХК"
+                        className="h-full w-full object-cover"
+                        onError={(e) => { e.currentTarget.style.display = 'none' }}
+                      />
+                      <span className="text-4xl hidden">🐹</span>
                     </motion.div>
                   </div>
-                  <h1 className="text-xl font-bold text-white">Привет, хомяк! Я — Ходлер</h1>
+                  <h1 className="text-xl font-bold text-white">Humster Комбат, позывной «ХК»</h1>
                   <p className="mt-2 text-sm leading-relaxed text-gray-400">
-                    Пережил 2017-й, 2018-й и FTX. Теперь хомяко-профессор блокчейна.
-                    Задай вопрос или пройди квиз — заработай <span className="text-yellow-400 font-medium">HODL-монетку</span> 🐾💎
+                    Прошёл все форки. Видел 51%-атаки. Теперь обучаю блокчейну.
+                    Задай вопрос, пройди квиз или{' '}
+                    <span className="text-yellow-400 font-medium">объясни мне понятие</span>{' '}
+                    — заработай токен.
                   </p>
                 </motion.div>
               )}
 
-              {/* Quick actions */}
               {showQuickActions && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
@@ -355,19 +318,16 @@ export function BotPage() {
                 </motion.div>
               )}
 
-              {/* Message list */}
               <AnimatePresence>
                 {messages.map((msg) => (
                   <ChatMessageComponent key={msg.id} message={msg} />
                 ))}
               </AnimatePresence>
 
-              {/* Typing indicator */}
               <AnimatePresence>
                 {isLoading && <TypingIndicator />}
               </AnimatePresence>
 
-              {/* Error */}
               <AnimatePresence>
                 {error && (
                   <motion.div
@@ -384,13 +344,12 @@ export function BotPage() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
             <ChatInput
               value={input}
               onChange={setInput}
-              onSend={handleSend}
+              onSend={() => sendMessage(input)}
               disabled={isLoading}
-              placeholder="Спроси Ходлера о блокчейне... или попроси квиз!"
+              placeholder="Задай вопрос ХК или объясни ему понятие..."
             />
           </>
         )}

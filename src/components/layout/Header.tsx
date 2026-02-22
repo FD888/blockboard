@@ -9,7 +9,7 @@ const navLinks = [
   { href: "/lectures", label: "Лекции" },
   { href: "/glossary", label: "Глоссарий" },
   { href: "/about", label: "О курсе" },
-  { href: "/bot", label: "🐹 Ходлер" },
+  { href: "/bot", label: "🐹 ХК" },
 ] as const;
 
 export function Header() {

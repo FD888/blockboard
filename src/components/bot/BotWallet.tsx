@@ -2,38 +2,26 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { HodlCoin } from '@/components/chat/QuizCard'
+import { readWallet } from '@/components/chat/QuizCard'
+import type { HodlCoin } from '@/types/chat'
 
-// ─── Wallet reader ─────────────────────────────────────────────────────────────
-
-function readWallet(): HodlCoin[] {
-  try {
-    const raw = localStorage.getItem('hodl_wallet')
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
-}
-
-// ─── Verify form ───────────────────────────────────────────────────────────────
+// ─── Inline verify form ────────────────────────────────────────────────────────
 
 function VerifyForm() {
   const [coin, setCoin] = useState('')
-  const [topic, setTopic] = useState('')
-  const [pct, setPct] = useState('')
-  const [result, setResult] = useState<{ valid: boolean; topic?: string; pct?: number } | null>(null)
+  const [result, setResult] = useState<{ valid: boolean; category?: string; score?: number } | null>(null)
   const [loading, setLoading] = useState(false)
 
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault()
-    if (!coin || !topic || !pct) return
+    if (!coin.trim()) return
     setLoading(true)
     setResult(null)
     try {
       const res = await fetch('/api/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ coin: coin.trim().toUpperCase(), topic: topic.trim(), pct: parseInt(pct) }),
+        body: JSON.stringify({ coin: coin.trim() }),
       })
       const data = await res.json()
       setResult(data)
@@ -47,40 +35,18 @@ function VerifyForm() {
   return (
     <form onSubmit={handleVerify} className="space-y-3">
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-400">HODL-монетка</label>
+        <label className="mb-1 block text-xs font-medium text-gray-400">HK-токен</label>
         <input
           type="text"
           value={coin}
           onChange={(e) => setCoin(e.target.value)}
-          placeholder="HODL-A3F7B2C9D1E4F6A8"
+          placeholder="HK1:a3f9b2c1:quiz-90:7e4cd1f2a9b3"
           className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-mono text-xs text-white placeholder-gray-600 focus:border-yellow-500/40 focus:outline-none"
-        />
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-400">Тема квиза</label>
-        <input
-          type="text"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          placeholder="Блокчейн и консенсус"
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white placeholder-gray-600 focus:border-yellow-500/40 focus:outline-none"
-        />
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-medium text-gray-400">Результат (%)</label>
-        <input
-          type="number"
-          value={pct}
-          onChange={(e) => setPct(e.target.value)}
-          placeholder="85"
-          min={0}
-          max={100}
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white placeholder-gray-600 focus:border-yellow-500/40 focus:outline-none"
         />
       </div>
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || !coin.trim()}
         className="w-full rounded-lg bg-yellow-500/20 px-3 py-2 text-xs font-semibold text-yellow-300 transition-colors hover:bg-yellow-500/30 disabled:opacity-50"
       >
         {loading ? 'Проверяем...' : 'Верифицировать'}
@@ -98,9 +64,12 @@ function VerifyForm() {
             }`}
           >
             {result.valid ? (
-              <span>✅ Монетка валидна! Тема: «{result.topic}», результат: {result.pct}%</span>
+              <span>
+                ✅ Токен подлинный ·{' '}
+                {result.category === 'quiz' ? `Квиз (${result.score}%)` : 'Объяснение'}
+              </span>
             ) : (
-              <span>❌ Монетка не прошла проверку. Возможно, данные неверны.</span>
+              <span>❌ Токен не прошёл проверку.</span>
             )}
           </motion.div>
         )}
@@ -112,7 +81,6 @@ function VerifyForm() {
 // ─── Main wallet component ─────────────────────────────────────────────────────
 
 interface BotWalletProps {
-  /** Refresh trigger — increment to force re-read from localStorage */
   refreshKey?: number
 }
 
@@ -130,18 +98,17 @@ export function BotWallet({ refreshKey = 0 }: BotWalletProps) {
       await navigator.clipboard.writeText(coin)
       setCopiedIdx(idx)
       setTimeout(() => setCopiedIdx(null), 2000)
-    } catch {
-      // Clipboard unavailable
-    }
+    } catch { /* clipboard unavailable */ }
   }
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-sm font-bold text-white">🎒 Кошелёк</h2>
-          <p className="text-xs text-gray-500">{coins.length} монетк{coins.length === 1 ? 'а' : coins.length < 5 ? 'и' : ''}</p>
+          <p className="text-xs text-gray-500">
+            {coins.length} {coins.length === 1 ? 'токен' : coins.length < 5 ? 'токена' : 'токенов'}
+          </p>
         </div>
         <button
           onClick={() => setShowVerify((v) => !v)}
@@ -151,7 +118,7 @@ export function BotWallet({ refreshKey = 0 }: BotWalletProps) {
               : 'border-white/10 text-gray-400 hover:border-white/20 hover:text-gray-200'
           }`}
         >
-          {showVerify ? '← Кошелёк' : '🔍 Верифицировать'}
+          {showVerify ? '← Кошелёк' : '🔍 Проверить'}
         </button>
       </div>
 
@@ -162,7 +129,7 @@ export function BotWallet({ refreshKey = 0 }: BotWalletProps) {
           <span className="text-3xl">🐹</span>
           <p className="text-sm text-gray-500">Кошелёк пуст</p>
           <p className="text-xs text-gray-600 leading-relaxed">
-            Пройди квиз на ≥70% и получи свою первую HODL-монетку!
+            Пройди квиз на ≥70% или объясни ХК понятие — получишь токен.
           </p>
         </div>
       ) : (
@@ -178,11 +145,11 @@ export function BotWallet({ refreshKey = 0 }: BotWalletProps) {
               >
                 <div className="mb-1.5 flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-xs font-medium text-yellow-200">{entry.topic}</p>
-                    <p className="text-[10px] text-yellow-300/50">{entry.pct}% · {entry.date}</p>
+                    <p className="truncate text-xs font-medium text-yellow-200">{entry.label}</p>
+                    <p className="text-[10px] text-yellow-300/50">{entry.date}</p>
                   </div>
                   <span className="shrink-0 rounded-full bg-yellow-500/20 px-1.5 py-0.5 text-[10px] font-bold text-yellow-400">
-                    {entry.pct >= 90 ? '⭐' : entry.pct >= 80 ? '🥈' : '🥉'}
+                    {entry.label.startsWith('Объяснение') ? '🧠' : '🎯'}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">

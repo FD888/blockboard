@@ -11,9 +11,9 @@ import { ChatInput } from './ChatInput'
 
 const QUICK_ACTIONS = [
   { label: '📖 Объясни тему', prompt: 'Объясни основные концепции блокчейна простыми словами' },
-  { label: '🧪 Проверь знания', prompt: 'Составь тест из 3 вопросов по блокчейну для самопроверки' },
+  { label: '🎯 Квиз на токен', prompt: 'Составь квиз из 3 вопросов по блокчейну, чтобы я мог получить токен' },
   { label: '🔍 Что такое консенсус?', prompt: 'Что такое консенсус в блокчейне и какие виды бывают?' },
-  { label: '💡 Зачем нужен блокчейн?', prompt: 'Какие проблемы решает блокчейн в экономике и финансах?' },
+  { label: '🧠 Объясни ХК понятие', prompt: 'Хочу объяснить тебе понятие из блокчейна и получить токен. С чего начнём?' },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -144,7 +144,7 @@ export function ChatWidget() {
                 🐹
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white">Ходлер</p>
+                <p className="text-sm font-semibold text-white">Humster Комбат</p>
                 <p className="truncate text-xs text-gray-500">
                   {currentPage}
                 </p>
@@ -185,10 +185,10 @@ export function ChatWidget() {
                   <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full border border-yellow-500/30 bg-yellow-500/10 text-2xl">
                     🐹
                   </div>
-                  <p className="text-sm font-medium text-white">Привет! Я Ходлер</p>
+                  <p className="text-sm font-medium text-white">Humster Комбат, позывной «ХК»</p>
                   <p className="mt-1 text-xs leading-relaxed text-gray-400">
-                    Хомяк-профессор блокчейна. Спрашивай про лекции,
-                    проходи квизы и зарабатывай HODL-монетки! 🐾
+                    Спрашивай про блокчейн, проходи квизы
+                    и объясняй мне понятия — зарабатывай токены. 🎖
                   </p>
                 </motion.div>
               )}
@@ -256,7 +256,7 @@ export function ChatWidget() {
       {/* ── Floating Button ── */}
       <motion.button
         onClick={() => setIsOpen((o) => !o)}
-        aria-label={isOpen ? 'Закрыть чат' : 'Открыть чат с Ходлером'}
+        aria-label={isOpen ? 'Закрыть чат' : 'Открыть чат с Humster Комбат'}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.94 }}
         className="fixed bottom-6 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-yellow-500/40 bg-[#0d1121] text-2xl shadow-lg shadow-black/40 transition-colors hover:border-yellow-500/60 sm:right-6"
