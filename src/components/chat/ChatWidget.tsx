@@ -140,8 +140,14 @@ export function ChatWidget() {
           >
             {/* Header */}
             <div className="flex items-center gap-3 border-b border-white/8 px-4 py-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-500/40 bg-yellow-500/10 text-lg">
-                🐹
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-500/40 bg-yellow-500/10 overflow-hidden text-lg">
+                <img
+                  src="/images/hk-avatar.png"
+                  alt="ХК"
+                  className="h-full w-full object-cover"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement).style.display = '' }}
+                />
+                <span style={{ display: 'none' }}>🐹</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white">Humster Комбат</p>
@@ -182,8 +188,14 @@ export function ChatWidget() {
                   animate={{ opacity: 1 }}
                   className="text-center"
                 >
-                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full border border-yellow-500/30 bg-yellow-500/10 text-2xl">
-                    🐹
+                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full border border-yellow-500/30 bg-yellow-500/10 overflow-hidden text-2xl">
+                    <img
+                      src="/images/hk-avatar.png"
+                      alt="ХК"
+                      className="h-full w-full object-cover"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement).style.display = '' }}
+                    />
+                    <span style={{ display: 'none' }}>🐹</span>
                   </div>
                   <p className="text-sm font-medium text-white">Humster Комбат, позывной «ХК»</p>
                   <p className="mt-1 text-xs leading-relaxed text-gray-400">
@@ -242,6 +254,25 @@ export function ChatWidget() {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Mid-conversation quick actions */}
+            {messages.length > 0 && (
+              <div className="flex gap-2 border-t border-white/5 px-3 py-2">
+                <button
+                  onClick={() => handleQuickAction(QUICK_ACTIONS[1].prompt)}
+                  disabled={isLoading}
+                  className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-2.5 py-1 text-[11px] text-yellow-300/80 transition-all hover:border-yellow-500/40 hover:bg-yellow-500/10 hover:text-yellow-200 disabled:opacity-40"
+                >
+                  🎯 Квиз
+                </button>
+                <button
+                  onClick={() => handleQuickAction(QUICK_ACTIONS[3].prompt)}
+                  disabled={isLoading}
+                  className="rounded-lg border border-white/10 bg-white/3 px-2.5 py-1 text-[11px] text-gray-400 transition-all hover:border-white/20 hover:bg-white/6 hover:text-gray-200 disabled:opacity-40"
+                >
+                  🧠 Объяснить
+                </button>
+              </div>
+            )}
             {/* Input */}
             <ChatInput
               value={input}
@@ -259,7 +290,7 @@ export function ChatWidget() {
         aria-label={isOpen ? 'Закрыть чат' : 'Открыть чат с Humster Комбат'}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.94 }}
-        className="fixed bottom-6 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-yellow-500/40 bg-[#0d1121] text-2xl shadow-lg shadow-black/40 transition-colors hover:border-yellow-500/60 sm:right-6"
+        className="fixed bottom-6 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-yellow-500/40 bg-[#0d1121] shadow-lg shadow-black/40 transition-colors hover:border-yellow-500/60 sm:right-6 overflow-hidden"
       >
         <AnimatePresence mode="wait">
           {isOpen ? (
@@ -269,20 +300,27 @@ export function ChatWidget() {
               animate={{ rotate: 0, opacity: 1 }}
               exit={{ rotate: 90, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="text-base text-gray-400"
+              className="text-base text-gray-400 text-2xl"
             >
               ✕
             </motion.span>
           ) : (
-            <motion.span
+            <motion.div
               key="open"
               initial={{ rotate: 90, opacity: 0 }}
               animate={{ rotate: 0, opacity: 1 }}
               exit={{ rotate: -90, opacity: 0 }}
               transition={{ duration: 0.2 }}
+              className="h-full w-full"
             >
-              🐹
-            </motion.span>
+              <img
+                src="/images/hk-avatar.png"
+                alt="ХК"
+                className="h-full w-full object-cover"
+                onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement).style.display = '' }}
+              />
+              <span className="hidden text-2xl">🐹</span>
+            </motion.div>
           )}
         </AnimatePresence>
 

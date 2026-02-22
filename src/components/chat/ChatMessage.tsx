@@ -121,8 +121,14 @@ export function ChatMessage({ message }: ChatMessageProps) {
       className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
     >
       {!isUser && (
-        <div className="mr-2 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-yellow-500/40 bg-yellow-500/10 text-xs">
-          🐹
+        <div className="mr-2 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-yellow-500/40 bg-yellow-500/10 overflow-hidden text-xs">
+          <img
+            src="/images/hk-avatar.png"
+            alt="ХК"
+            className="h-full w-full object-cover"
+            onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement).style.display = '' }}
+          />
+          <span style={{ display: 'none' }}>🐹</span>
         </div>
       )}
 
@@ -157,8 +163,14 @@ export function TypingIndicator() {
       exit={{ opacity: 0 }}
       className="flex items-center gap-2"
     >
-      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-yellow-500/40 bg-yellow-500/10 text-xs">
-        🐹
+      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-yellow-500/40 bg-yellow-500/10 overflow-hidden text-xs">
+        <img
+          src="/images/hk-avatar.png"
+          alt="ХК"
+          className="h-full w-full object-cover"
+          onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement).style.display = '' }}
+        />
+        <span style={{ display: 'none' }}>🐹</span>
       </div>
       <div className="flex gap-1 rounded-2xl rounded-tl-sm border border-white/8 bg-white/5 px-3 py-3">
         {[0, 1, 2].map((i) => (
