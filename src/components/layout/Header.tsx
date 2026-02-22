@@ -9,7 +9,7 @@ const navLinks = [
   { href: "/lectures", label: "Лекции" },
   { href: "/glossary", label: "Глоссарий" },
   { href: "/about", label: "О курсе" },
-  { href: "/bot", label: "ХК" },
+  { href: "/bot", label: "КОМБАТ" },
 ] as const;
 
 export function Header() {
@@ -95,14 +95,7 @@ export function Header() {
                   }`}
                   aria-current={isActive(link.href) ? "page" : undefined}
                 >
-                  {link.href === '/bot' ? (
-                    <span className="flex items-center gap-1.5">
-                      <span className="flex h-4 w-4 overflow-hidden rounded-full border border-yellow-500/40">
-                        <img src="/images/hk-avatar.png" alt="" className="h-full w-full object-cover" onError={(e) => { (e.currentTarget.parentNode as HTMLElement).textContent = '🐹' }} />
-                      </span>
-                      {link.label}
-                    </span>
-                  ) : link.label}
+                  {link.label}
                 </Link>
               </li>
             ))}
