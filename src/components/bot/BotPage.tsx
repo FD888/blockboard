@@ -211,7 +211,7 @@ export function BotPage() {
   const showQuickActions = messages.length === 0 && !isLoading
 
   return (
-    <div className="flex h-[calc(100dvh-4rem)] md:h-[calc(100dvh-5rem)]">
+    <div className="fixed inset-0 top-16 md:top-20 flex overflow-hidden">
 
       {/* ── Сайдбар (desktop) ── */}
       <aside className="hidden w-72 shrink-0 flex-col gap-5 overflow-y-auto border-r border-white/8 bg-[#0a0d1a] p-6 lg:flex">
@@ -234,7 +234,15 @@ export function BotPage() {
         {/* Мобильный хедер */}
         <div className="flex items-center justify-between border-b border-white/8 px-4 py-3 lg:hidden">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🐹</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-500/40 bg-yellow-500/10 overflow-hidden">
+              <img
+                src="/images/hk-avatar.png"
+                alt="ХК"
+                className="h-full w-full object-cover"
+                onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement).style.display = '' }}
+              />
+              <span className="hidden text-lg">🐹</span>
+            </div>
             <div>
               <p className="text-sm font-bold text-white">Humster Комбат</p>
               <p className="text-xs text-yellow-400/60">позывной «ХК»</p>
@@ -344,6 +352,24 @@ export function BotPage() {
               <div ref={messagesEndRef} />
             </div>
 
+            {messages.length > 0 && (
+              <div className="flex gap-2 border-t border-white/5 px-4 py-2">
+                <button
+                  onClick={() => sendMessage(QUICK_ACTIONS[0].prompt)}
+                  disabled={isLoading}
+                  className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-3 py-1.5 text-xs text-yellow-300/80 transition-all hover:border-yellow-500/40 hover:bg-yellow-500/10 hover:text-yellow-200 disabled:opacity-40"
+                >
+                  🎯 Квиз
+                </button>
+                <button
+                  onClick={() => sendMessage(QUICK_ACTIONS[1].prompt)}
+                  disabled={isLoading}
+                  className="rounded-lg border border-white/10 bg-white/3 px-3 py-1.5 text-xs text-gray-400 transition-all hover:border-white/20 hover:bg-white/6 hover:text-gray-200 disabled:opacity-40"
+                >
+                  🧠 Объяснить понятие
+                </button>
+              </div>
+            )}
             <ChatInput
               value={input}
               onChange={setInput}
