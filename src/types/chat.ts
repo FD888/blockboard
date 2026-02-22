@@ -32,15 +32,24 @@ export interface QuizAction {
   questions: QuizQuestion[]
 }
 
-export type ChatAction = NavigateAction | QuizAction
+/** Выдаётся ХК когда студент успешно объяснил понятие в режиме "Объясни ХК" */
+export interface AwardTokenAction {
+  type: 'award_token'
+  token: string    // подписанный HK1-токен
+  label: string    // человекочитаемое описание
+  date: string     // ISO date string
+  concept: string  // название понятия
+}
+
+export type ChatAction = NavigateAction | QuizAction | AwardTokenAction
 
 // ─── API request / response ───────────────────────────────────────────────────
 
 export interface ChatRequest {
   messages: Pick<ChatMessage, 'role' | 'content'>[]
   context?: {
-    page: string          // e.g. '/', '/lectures', '/lectures/01-basics'
-    lectureSlug?: string  // slug of the lecture currently being read
+    page: string
+    lectureSlug?: string
   }
 }
 
@@ -68,4 +77,12 @@ export interface LectureMeta {
   date?: string
   summary?: string
   keywords?: string[]
+}
+
+// ─── Wallet ──────────────────────────────────────────────────────────────────
+
+export interface HodlCoin {
+  coin: string   // HK1-токен
+  label: string  // «Квиз (90%) · Тема» или «Объяснение · Понятие»
+  date: string   // ISO date string
 }

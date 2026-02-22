@@ -11,9 +11,9 @@ import { ChatInput } from './ChatInput'
 
 const QUICK_ACTIONS = [
   { label: '📖 Объясни тему', prompt: 'Объясни основные концепции блокчейна простыми словами' },
-  { label: '🧪 Проверь знания', prompt: 'Составь тест из 3 вопросов по блокчейну для самопроверки' },
+  { label: '🎯 Квиз на токен', prompt: 'Составь квиз из 3 вопросов по блокчейну, чтобы я мог получить токен' },
   { label: '🔍 Что такое консенсус?', prompt: 'Что такое консенсус в блокчейне и какие виды бывают?' },
-  { label: '💡 Зачем нужен блокчейн?', prompt: 'Какие проблемы решает блокчейн в экономике и финансах?' },
+  { label: '🧠 Объясни ХК понятие', prompt: 'Хочу объяснить тебе понятие из блокчейна и получить токен. С чего начнём?' },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -121,6 +121,9 @@ export function ChatWidget() {
 
   const showQuickActions = messages.length === 0 && !isLoading
 
+  // Bot page has its own full-screen chat — no need for floating widget there
+  if (pathname === '/bot') return null
+
   return (
     <>
       {/* ── Chat Panel ── */}
@@ -137,11 +140,11 @@ export function ChatWidget() {
           >
             {/* Header */}
             <div className="flex items-center gap-3 border-b border-white/8 px-4 py-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-secondary/40 bg-secondary/10 text-sm">
-                ⛓
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-yellow-500/40 bg-yellow-500/10 text-lg">
+                🐹
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white">Chain</p>
+                <p className="text-sm font-semibold text-white">Humster Комбат</p>
                 <p className="truncate text-xs text-gray-500">
                   {currentPage}
                 </p>
@@ -179,13 +182,13 @@ export function ChatWidget() {
                   animate={{ opacity: 1 }}
                   className="text-center"
                 >
-                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full border border-secondary/30 bg-secondary/10 text-2xl">
-                    ⛓
+                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full border border-yellow-500/30 bg-yellow-500/10 text-2xl">
+                    🐹
                   </div>
-                  <p className="text-sm font-medium text-white">Привет! Я Chain</p>
+                  <p className="text-sm font-medium text-white">Humster Комбат, позывной «ХК»</p>
                   <p className="mt-1 text-xs leading-relaxed text-gray-400">
-                    Ассистент курса по блокчейну. Спрашивай про лекции,
-                    концепции или попроси проверить знания.
+                    Спрашивай про блокчейн, проходи квизы
+                    и объясняй мне понятия — зарабатывай токены. 🎖
                   </p>
                 </motion.div>
               )}
@@ -253,10 +256,10 @@ export function ChatWidget() {
       {/* ── Floating Button ── */}
       <motion.button
         onClick={() => setIsOpen((o) => !o)}
-        aria-label={isOpen ? 'Закрыть чат' : 'Открыть чат с ассистентом'}
+        aria-label={isOpen ? 'Закрыть чат' : 'Открыть чат с Humster Комбат'}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.94 }}
-        className="fixed bottom-6 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-secondary/40 bg-[#0d1121] text-2xl shadow-lg shadow-black/40 transition-colors hover:border-secondary/70 sm:right-6"
+        className="fixed bottom-6 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-yellow-500/40 bg-[#0d1121] text-2xl shadow-lg shadow-black/40 transition-colors hover:border-yellow-500/60 sm:right-6"
       >
         <AnimatePresence mode="wait">
           {isOpen ? (
@@ -278,7 +281,7 @@ export function ChatWidget() {
               exit={{ rotate: -90, opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              ⛓
+              🐹
             </motion.span>
           )}
         </AnimatePresence>
@@ -286,8 +289,8 @@ export function ChatWidget() {
         {/* Notification pulse when messages exist */}
         {!isOpen && messages.length > 0 && (
           <span className="absolute right-1 top-1 flex h-3 w-3">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary opacity-75" />
-            <span className="relative inline-flex h-3 w-3 rounded-full bg-secondary" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-yellow-400 opacity-75" />
+            <span className="relative inline-flex h-3 w-3 rounded-full bg-yellow-400" />
           </span>
         )}
       </motion.button>
