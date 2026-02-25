@@ -72,10 +72,15 @@ export function Header() {
                 </span>
               </div>
             </div>
-            <span className="text-lg md:text-xl font-bold tracking-tight">
-              <span className="text-primary">Block</span>
-              <span className="text-slate-100">Board</span>
-            </span>
+            <div className="flex flex-col leading-none">
+              <span className="text-lg md:text-xl font-bold tracking-tight">
+                <span className="text-primary">Block</span>
+                <span className="text-slate-100">Board</span>
+              </span>
+              <span className="text-[10px] font-medium text-primary/70 tracking-widest uppercase hidden sm:block">
+                СПБГУ · Blockchain
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}

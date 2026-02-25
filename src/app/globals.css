@@ -61,6 +61,31 @@
   .text-gradient {
     @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
   }
+
+  /* Premium section separator — subtle gradient fade */
+  .section-separator {
+    @apply relative;
+  }
+  .section-separator::before {
+    content: "";
+    @apply absolute top-0 left-0 right-0 h-px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(202, 6, 16, 0.2),
+      rgba(147, 207, 189, 0.3),
+      rgba(202, 6, 16, 0.2),
+      transparent
+    );
+  }
+
+  /* SPbGU badge pill */
+  .spbgu-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full
+      border border-primary/30 bg-primary/10
+      text-primary text-xs font-semibold tracking-wide uppercase
+      hover:border-primary/50 hover:bg-primary/15 transition-all duration-200;
+  }
 }
 
 @layer utilities {

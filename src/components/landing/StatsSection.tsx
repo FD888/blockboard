@@ -68,14 +68,36 @@ const stats = [
     prefix: "",
     suffix: "",
   },
+  {
+    value: 300, // ~300 years SPbGU
+    label: "лет СПбГУ",
+    prefix: "~",
+    suffix: "",
+  },
 ];
 
 export function StatsSection() {
   return (
     <section className="relative z-10 py-24 sm:py-32">
       <div className="container-app">
+        {/* Section header */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
+        >
+          <p className="font-mono text-xs text-spbgu-gray-dark tracking-widest uppercase mb-2">
+            В цифрах
+          </p>
+          <h2 className="text-fluid-xl font-bold text-slate-100">
+            BlockBoard · СПбГУ
+          </h2>
+        </motion.div>
+
         {/* Stats grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-4 max-w-3xl mx-auto mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
           {stats.map((stat, i) => (
             <motion.div
               key={stat.label}
@@ -86,7 +108,7 @@ export function StatsSection() {
                 duration: 0.5,
                 delay: i * 0.15,
               }}
-              className="text-center"
+              className="text-center p-6 rounded-xl border border-border bg-surface/30 hover:border-secondary/30 transition-colors duration-300"
             >
               <div className="text-fluid-3xl font-bold font-mono text-slate-100 mb-2">
                 {stat.value !== null ? (
