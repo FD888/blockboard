@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "О курсе — BlockBoard · СПбГУ",
+  title: "О курсе — BlockBoard",
   description:
-    "Дисциплина «Технология блокчейн в экономике и финансах» Санкт-Петербургского государственного университета. Транскрибированные лекции с AI-суммаризацией.",
+    "Дисциплина «Технология блокчейн в экономике и финансах». Транскрибированные лекции с AI-суммаризацией.",
 };
 
 const features = [
@@ -69,21 +69,6 @@ export default function AboutPage() {
       <div className="relative border-b border-border overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
         <div className="container-app py-24 md:py-32 relative z-10">
-          {/* SPbGU badge */}
-          <div className="mb-6">
-            <a
-              href="https://spbu.ru"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-xs font-semibold tracking-wide uppercase hover:border-primary/50 transition-colors"
-            >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M6 0.5L11 3V7C11 9.5 8.8 11.5 6 12C3.2 11.5 1 9.5 1 7V3L6 0.5Z" fill="currentColor" fillOpacity="0.3" stroke="currentColor" strokeWidth="0.8"/>
-              </svg>
-              Санкт-Петербургский государственный университет
-            </a>
-          </div>
-
           <h1 className="text-fluid-3xl font-bold mb-4 text-slate-100">
             О курсе
           </h1>
@@ -91,10 +76,9 @@ export default function AboutPage() {
             «Технология блокчейн в экономике и финансах»
           </p>
           <p className="text-slate-400 max-w-2xl leading-relaxed">
-            Академический курс Санкт-Петербургского государственного университета,
-            посвящённый технологии блокчейн, её применению в финансовом секторе
-            и экономике. BlockBoard — студенческая платформа для удобного доступа
-            к материалам лекций с AI-поддержкой.
+            Академический курс, посвящённый технологии блокчейн, её применению
+            в финансовом секторе и экономике. BlockBoard — платформа для
+            удобного доступа к материалам лекций с AI-поддержкой.
           </p>
         </div>
       </div>
@@ -143,66 +127,31 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* University block */}
+        {/* CTA */}
         <section>
-          <div className="glass-card p-8 md:p-10 flex flex-col md:flex-row gap-8 items-start">
-            {/* Shield */}
-            <div className="flex-shrink-0">
-              <svg
-                width="64"
-                height="72"
-                viewBox="0 0 64 72"
-                fill="none"
-                className="text-primary"
-              >
-                <path
-                  d="M32 2L60 14V32C60 50 47 64 32 68C17 64 4 50 4 32V14L32 2Z"
-                  fill="currentColor"
-                  fillOpacity="0.1"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M32 12L52 22V32C52 46 43 57 32 60C21 57 12 46 12 32V22L32 12Z"
-                  fill="currentColor"
-                  fillOpacity="0.08"
-                />
-                <text x="32" y="46" textAnchor="middle" fontSize="20" fill="currentColor" fontWeight="bold" fontFamily="serif">СПб</text>
-              </svg>
-            </div>
-
+          <div className="glass-card p-8 md:p-10 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
             <div>
-              <h2 className="text-fluid-xl font-bold text-slate-100 mb-2">
-                Санкт-Петербургский государственный университет
+              <h2 className="text-fluid-lg font-bold text-slate-100 mb-2">
+                Готов начать?
               </h2>
-              <p className="text-secondary font-medium mb-4">
-                Один из старейших и ведущих университетов России
+              <p className="text-slate-400 max-w-md">
+                Переходи к лекциям или изучи глоссарий терминов —
+                всё необходимое уже собрано здесь.
               </p>
-              <p className="text-slate-400 leading-relaxed mb-6 max-w-xl">
-                СПбГУ основан в 1724 году по указу Петра I. Экономический факультет
-                готовит специалистов мирового уровня в области финансов, экономики
-                и цифровых технологий. Курс «Технология блокчейн в экономике и финансах»
-                отражает стремление университета к подготовке кадров для цифровой экономики.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <a
-                  href="https://spbu.ru"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary-dark text-white text-sm font-medium transition-colors"
-                >
-                  Сайт университета
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M2.5 11.5L11.5 2.5M11.5 2.5H6M11.5 2.5V8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </a>
-                <Link
-                  href="/lectures"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-secondary/30 text-secondary hover:bg-secondary/10 text-sm font-medium transition-colors"
-                >
-                  Перейти к лекциям
-                </Link>
-              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 flex-shrink-0">
+              <Link
+                href="/lectures"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary hover:bg-primary-dark text-white text-sm font-medium transition-colors"
+              >
+                Перейти к лекциям
+              </Link>
+              <Link
+                href="/glossary"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-secondary/30 text-secondary hover:bg-secondary/10 text-sm font-medium transition-colors"
+              >
+                Глоссарий
+              </Link>
             </div>
           </div>
         </section>

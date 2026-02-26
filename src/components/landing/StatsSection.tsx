@@ -68,12 +68,6 @@ const stats = [
     prefix: "",
     suffix: "",
   },
-  {
-    value: 300, // ~300 years SPbGU
-    label: "лет СПбГУ",
-    prefix: "~",
-    suffix: "",
-  },
 ];
 
 export function StatsSection() {
@@ -92,12 +86,12 @@ export function StatsSection() {
             В цифрах
           </p>
           <h2 className="text-fluid-xl font-bold text-slate-100">
-            BlockBoard · СПбГУ
+            BlockBoard
           </h2>
         </motion.div>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto mb-8">
           {stats.map((stat, i) => (
             <motion.div
               key={stat.label}
