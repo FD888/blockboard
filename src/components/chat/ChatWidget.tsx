@@ -135,7 +135,7 @@ export function ChatWidget() {
     async (lectureNumber: number, lectureTitle: string) => {
       if (isLoading) return
       setError(null)
-      const content = `Составь квиз из 7 вопросов по Лекции ${lectureNumber}: ${lectureTitle}. Это квиз для получения токена.`
+      const content = `Квиз по Лекции ${lectureNumber}: ${lectureTitle}`
       const userMessage: ChatMessage = {
         id: generateId(),
         role: 'user',
@@ -146,8 +146,9 @@ export function ChatWidget() {
       setIsLoading(true)
       try {
         const payload: ChatRequest = {
-          messages: [...messages, userMessage].map((m) => ({ role: m.role, content: m.content })),
+          messages: [{ role: 'user', content }],
           context: { page: pathname, lectureSlug: String(lectureNumber) },
+          directQuiz: { lectureNumber, lectureTitle },
         }
         const res = await fetch('/api/chat', {
           method: 'POST',
