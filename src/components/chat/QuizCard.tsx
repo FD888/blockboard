@@ -92,7 +92,13 @@ export function QuizCard({ action }: QuizCardProps) {
       const res = await fetch('/api/mint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ activity: 'quiz', topic: action.topic, score: finalScore, total }),
+        body: JSON.stringify({
+          activity: 'quiz',
+          topic: action.topic,
+          score: finalScore,
+          total,
+          lectureNumber: action.lectureNumber ?? 0,
+        }),
       })
       const data = await res.json()
       if (!res.ok || data.error) {
@@ -125,11 +131,26 @@ export function QuizCard({ action }: QuizCardProps) {
 
   if (finished) {
     const pct = Math.round((score / total) * 100)
-    const passed = pct >= 70
+    // Порог: 6 из 7 правильных ответов
+    const passed = score >= 6
+    // Уже есть токен за эту лекцию?
+    const lectureNum = action.lectureNumber
+    const alreadyHasToken = lectureNum
+      ? (() => {
+          try {
+            const raw = localStorage.getItem('hk_wallet')
+            if (!raw) return false
+            const wallet: { coin: string }[] = JSON.parse(raw)
+            return wallet.some((c) =>
+              new RegExp(`^HK1:[0-9a-f]+:quiz-L${lectureNum}-\\d+:[0-9a-f]+$`).test(c.coin)
+            )
+          } catch { return false }
+        })()
+      : false
     const grade =
-      pct >= 90 ? '🎖 Отлично!' :
-      pct >= 70 ? 'Хорошо. Принято.' :
-      pct >= 50 ? 'Слабовато. Ещё раз.' : 'Провал. Разбор полётов — и снова в бой.'
+      score === total ? '🎖 Идеально!' :
+      score >= 6 ? 'Хорошо. Принято.' :
+      score >= 4 ? 'Слабовато. Ещё раз.' : 'Провал. Разбор полётов — и снова в бой.'
 
     return (
       <motion.div
@@ -140,11 +161,14 @@ export function QuizCard({ action }: QuizCardProps) {
         <div className="text-center">
           <p className="text-base font-bold text-white">{grade}</p>
           <p className="mt-1 text-sm text-gray-300">
-            {score} из {total} ({pct}%)
+            {score} из {total} правильных · {pct}%
           </p>
+          {!passed && (
+            <p className="mt-0.5 text-xs text-gray-500">Нужно минимум 6 из 7</p>
+          )}
         </div>
 
-        {passed && mintState === 'idle' && (
+        {passed && !alreadyHasToken && mintState === 'idle' && (
           <motion.div
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
@@ -152,7 +176,7 @@ export function QuizCard({ action }: QuizCardProps) {
             className="mt-4 rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3"
           >
             <p className="text-xs text-yellow-300/90">
-              Порог пройден. Получи токен — сохрани в кошелёк.
+              {score}/{total} — порог пройден. Получи токен за Лекцию {lectureNum}.
             </p>
             <button
               onClick={() => handleMint(score)}
@@ -160,6 +184,19 @@ export function QuizCard({ action }: QuizCardProps) {
             >
               🎖 Получить токен
             </button>
+          </motion.div>
+        )}
+
+        {passed && alreadyHasToken && mintState === 'idle' && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-4 rounded-lg border border-secondary/30 bg-secondary/5 p-3"
+          >
+            <p className="text-xs text-secondary/90">
+              ✓ Токен за Лекцию {lectureNum} уже в кошельке. Повторная выдача не предусмотрена.
+            </p>
           </motion.div>
         )}
 

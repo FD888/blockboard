@@ -12,7 +12,7 @@ import { readWallet } from '@/components/chat/QuizCard'
 // ─── Quick actions ─────────────────────────────────────────────────────────────
 
 const QUICK_ACTIONS = [
-  { label: '🎯 Квиз на токен', prompt: 'Составь квиз из 4 вопросов по блокчейну, чтобы я мог получить токен' },
+  { label: '🎯 Квиз на токен', prompt: '__QUIZ_PICKER__' },
   { label: '🧠 Объясни ХК понятие', prompt: 'Хочу объяснить тебе понятие из блокчейна и получить токен. С чего начнём?' },
   { label: '⚡ Что такое консенсус?', prompt: 'Что такое консенсус-механизм? Объясни PoW и PoS' },
   { label: '💡 Зачем нужен блокчейн?', prompt: 'Какие реальные проблемы решает блокчейн в экономике?' },
@@ -208,6 +208,67 @@ export function BotPage() {
     [messages, isLoading, pathname],
   )
 
+  function handleQuickAction(prompt: string) {
+    if (prompt === '__QUIZ_PICKER__') {
+      const pickerMsg: ChatMessage = {
+        id: generateId(),
+        role: 'assistant',
+        content: 'Выбери лекцию, по которой хочешь пройти квиз на токен:',
+        timestamp: new Date(),
+        action: { type: 'lecture_quiz_select' },
+      }
+      setMessages((prev) => [...prev, pickerMsg])
+      return
+    }
+    sendMessage(prompt)
+  }
+
+  const handleLectureSelect = useCallback(
+    async (lectureNumber: number, lectureTitle: string) => {
+      if (isLoading) return
+      setError(null)
+      setMood('thinking')
+      const content = `Составь квиз из 7 вопросов по Лекции ${lectureNumber}: ${lectureTitle}. Это квиз для получения токена.`
+      const userMessage: ChatMessage = {
+        id: generateId(),
+        role: 'user',
+        content,
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, userMessage])
+      setIsLoading(true)
+      try {
+        const payload: ChatRequest = {
+          messages: [...messages, userMessage].map((m) => ({ role: m.role, content: m.content })),
+          context: { page: pathname, lectureSlug: String(lectureNumber) },
+        }
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const data: ChatResponse = await res.json()
+        if (!res.ok || data.error) { setError(data.error ?? 'Что-то пошло не так.'); setMood('idle'); return }
+        const botMessage: ChatMessage = {
+          id: generateId(),
+          role: 'assistant',
+          content: data.message,
+          timestamp: new Date(),
+          action: data.action,
+        }
+        setMessages((prev) => [...prev, botMessage])
+        setMood('excited')
+        setTimeout(() => setMood('idle'), 3000)
+      } catch {
+        setError('Не удалось связаться с сервером.')
+        setMood('idle')
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [messages, isLoading, pathname],
+  )
+
   const showQuickActions = messages.length === 0 && !isLoading
 
   return (
@@ -317,7 +378,7 @@ export function BotPage() {
                   {QUICK_ACTIONS.map((action) => (
                     <button
                       key={action.label}
-                      onClick={() => sendMessage(action.prompt)}
+                      onClick={() => handleQuickAction(action.prompt)}
                       className="rounded-xl border border-white/8 bg-white/3 px-3 py-3 text-left text-xs text-gray-300 transition-all hover:border-yellow-500/30 hover:bg-yellow-500/5 hover:text-white"
                     >
                       {action.label}
@@ -328,7 +389,7 @@ export function BotPage() {
 
               <AnimatePresence>
                 {messages.map((msg) => (
-                  <ChatMessageComponent key={msg.id} message={msg} />
+                  <ChatMessageComponent key={msg.id} message={msg} onSelectLecture={handleLectureSelect} />
                 ))}
               </AnimatePresence>
 
@@ -355,7 +416,7 @@ export function BotPage() {
             {messages.length > 0 && (
               <div className="flex gap-2 border-t border-white/5 px-4 py-2">
                 <button
-                  onClick={() => sendMessage(QUICK_ACTIONS[0].prompt)}
+                  onClick={() => handleQuickAction('__QUIZ_PICKER__')}
                   disabled={isLoading}
                   className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-3 py-1.5 text-xs text-yellow-300/80 transition-all hover:border-yellow-500/40 hover:bg-yellow-500/10 hover:text-yellow-200 disabled:opacity-40"
                 >

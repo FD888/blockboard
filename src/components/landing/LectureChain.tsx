@@ -5,15 +5,15 @@ import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { TextDecode } from "./TextDecode";
 
-const lectures = [
-  { id: 1, title: "Введение в блокчейн", hash: "a1b2c3d4" },
-  { id: 2, title: "Криптография", hash: "e5f6a7b8" },
-  { id: 3, title: "Механизмы консенсуса", hash: "c9d0e1f2" },
-  { id: 4, title: "Смарт-контракты", hash: "3a4b5c6d" },
-  { id: 5, title: "DeFi", hash: "7e8f9a0b" },
-  { id: 6, title: "NFT и токенизация", hash: "1c2d3e4f" },
-  { id: 7, title: "Регулирование", hash: "5a6b7c8d" },
-];
+export interface LectureEntry {
+  number: number;
+  title: string;
+  available: boolean;
+}
+
+interface Props {
+  lectures: LectureEntry[];
+}
 
 function ChainLink({ vertical = false }: { vertical?: boolean }) {
   if (vertical) {
@@ -74,7 +74,100 @@ const blockVariants = {
   }),
 };
 
-export function LectureChain() {
+function BlockCard({ lecture, index, isInView }: { lecture: LectureEntry; index: number; isInView: boolean }) {
+  const inner = (
+    <motion.div
+      custom={index}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+      variants={blockVariants}
+    >
+      <div
+        className={`glass-card p-4 w-52 flex-shrink-0 transition-all duration-300 block ${
+          lecture.available
+            ? "group hover:-translate-y-1 hover:shadow-glow cursor-pointer"
+            : "opacity-50 cursor-not-allowed"
+        }`}
+      >
+        {/* Block number */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="font-mono text-xs text-primary font-medium">
+            Block #{lecture.number}
+          </span>
+          {lecture.available ? (
+            <span className="w-2 h-2 rounded-full bg-secondary" />
+          ) : (
+            <span className="text-xs font-mono text-spbgu-gray-dark">скоро</span>
+          )}
+        </div>
+
+        {/* Title */}
+        <h3 className="text-sm font-medium text-slate-200 mb-2 leading-snug line-clamp-3">
+          {lecture.title}
+        </h3>
+
+        {/* Hash-style id */}
+        <p className="font-mono text-xs text-spbgu-gray-dark truncate">
+          0x{(lecture.number * 0xa1b2c3).toString(16).padStart(8, "0").slice(0, 8)}...
+        </p>
+      </div>
+    </motion.div>
+  );
+
+  if (lecture.available) {
+    return (
+      <Link href={`/lectures/${lecture.number}`} className="contents">
+        {inner}
+      </Link>
+    );
+  }
+  return inner;
+}
+
+function BlockCardMobile({ lecture, index }: { lecture: LectureEntry; index: number }) {
+  const inner = (
+    <motion.div
+      custom={index}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.5 }}
+      variants={blockVariants}
+    >
+      <div
+        className={`glass-card p-4 w-full max-w-sm transition-all duration-300 ${
+          lecture.available
+            ? "group hover:shadow-glow"
+            : "opacity-50 cursor-not-allowed"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-xs text-primary font-medium w-20 shrink-0">
+            Block #{lecture.number}
+          </span>
+          <span className="text-sm font-medium text-slate-200 flex-1 line-clamp-2">
+            {lecture.title}
+          </span>
+          {lecture.available ? (
+            <span className="w-2 h-2 rounded-full bg-secondary shrink-0" />
+          ) : (
+            <span className="text-xs font-mono text-spbgu-gray-dark shrink-0">скоро</span>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  if (lecture.available) {
+    return (
+      <Link href={`/lectures/${lecture.number}`} className="block">
+        {inner}
+      </Link>
+    );
+  }
+  return inner;
+}
+
+export function LectureChain({ lectures }: Props) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
 
@@ -107,37 +200,8 @@ export function LectureChain() {
           className="hidden md:flex items-center overflow-x-auto no-scrollbar pb-4"
         >
           {lectures.map((lecture, i) => (
-            <div key={lecture.id} className="contents">
-              <motion.div
-                custom={i}
-                initial="hidden"
-                animate={isInView ? "visible" : "hidden"}
-                variants={blockVariants}
-              >
-                <Link
-                  href="/lectures"
-                  className="glass-card p-4 w-44 flex-shrink-0 group hover:-translate-y-1 hover:shadow-glow transition-all duration-300 block"
-                >
-                  {/* Block number */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-mono text-xs text-primary font-medium">
-                      Block #{lecture.id}
-                    </span>
-                    <span className="w-2 h-2 rounded-full bg-secondary" />
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="text-sm font-medium text-slate-200 mb-2 leading-snug">
-                    {lecture.title}
-                  </h3>
-
-                  {/* Hash */}
-                  <p className="font-mono text-xs text-spbgu-gray-dark truncate">
-                    0x{lecture.hash}...
-                  </p>
-                </Link>
-              </motion.div>
-
+            <div key={lecture.number} className="contents">
+              <BlockCard lecture={lecture} index={i} isInView={isInView} />
               {i < lectures.length - 1 && <ChainLink />}
             </div>
           ))}
@@ -146,33 +210,8 @@ export function LectureChain() {
         {/* Mobile: vertical chain */}
         <div className="md:hidden flex flex-col items-center">
           {lectures.map((lecture, i) => (
-            <div key={lecture.id}>
-              <motion.div
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.5 }}
-                variants={blockVariants}
-              >
-                <Link
-                  href="/lectures"
-                  className="glass-card p-4 w-full max-w-sm group hover:shadow-glow transition-all duration-300 block"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-xs text-primary font-medium w-16 shrink-0">
-                      Block #{lecture.id}
-                    </span>
-                    <span className="text-sm font-medium text-slate-200 flex-1">
-                      {lecture.title}
-                    </span>
-                    <span className="w-2 h-2 rounded-full bg-secondary shrink-0" />
-                  </div>
-                  <p className="font-mono text-xs text-spbgu-gray-dark mt-1 ml-[76px]">
-                    0x{lecture.hash}...
-                  </p>
-                </Link>
-              </motion.div>
-
+            <div key={lecture.number}>
+              <BlockCardMobile lecture={lecture} index={i} />
               {i < lectures.length - 1 && <ChainLink vertical />}
             </div>
           ))}

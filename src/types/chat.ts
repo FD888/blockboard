@@ -30,6 +30,12 @@ export interface QuizAction {
   type: 'quiz'
   topic: string
   questions: QuizQuestion[]
+  lectureNumber?: number
+}
+
+/** Выдаётся когда студент нажимает «Квиз на токен» — нужно выбрать лекцию */
+export interface LectureQuizSelectAction {
+  type: 'lecture_quiz_select'
 }
 
 /** Выдаётся ХК когда студент успешно объяснил понятие в режиме "Объясни ХК" */
@@ -41,7 +47,7 @@ export interface AwardTokenAction {
   concept: string  // название понятия
 }
 
-export type ChatAction = NavigateAction | QuizAction | AwardTokenAction
+export type ChatAction = NavigateAction | QuizAction | AwardTokenAction | LectureQuizSelectAction
 
 // ─── API request / response ───────────────────────────────────────────────────
 

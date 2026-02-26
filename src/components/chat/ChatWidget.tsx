@@ -11,7 +11,7 @@ import { ChatInput } from './ChatInput'
 
 const QUICK_ACTIONS = [
   { label: '📖 Объясни тему', prompt: 'Объясни основные концепции блокчейна простыми словами' },
-  { label: '🎯 Квиз на токен', prompt: 'Составь квиз из 3 вопросов по блокчейну, чтобы я мог получить токен' },
+  { label: '🎯 Квиз на токен', prompt: '__QUIZ_PICKER__' },
   { label: '🔍 Что такое консенсус?', prompt: 'Что такое консенсус в блокчейне и какие виды бывают?' },
   { label: '🧠 Объясни ХК понятие', prompt: 'Хочу объяснить тебе понятие из блокчейна и получить токен. С чего начнём?' },
 ]
@@ -116,8 +116,62 @@ export function ChatWidget() {
   }
 
   function handleQuickAction(prompt: string) {
+    if (prompt === '__QUIZ_PICKER__') {
+      // Insert a synthetic bot message with the lecture picker
+      const pickerMsg: ChatMessage = {
+        id: generateId(),
+        role: 'assistant',
+        content: 'Выбери лекцию, по которой хочешь пройти квиз на токен:',
+        timestamp: new Date(),
+        action: { type: 'lecture_quiz_select' },
+      }
+      setMessages((prev) => [...prev, pickerMsg])
+      return
+    }
     sendMessage(prompt)
   }
+
+  const handleLectureSelect = useCallback(
+    async (lectureNumber: number, lectureTitle: string) => {
+      if (isLoading) return
+      setError(null)
+      const content = `Составь квиз из 7 вопросов по Лекции ${lectureNumber}: ${lectureTitle}. Это квиз для получения токена.`
+      const userMessage: ChatMessage = {
+        id: generateId(),
+        role: 'user',
+        content,
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, userMessage])
+      setIsLoading(true)
+      try {
+        const payload: ChatRequest = {
+          messages: [...messages, userMessage].map((m) => ({ role: m.role, content: m.content })),
+          context: { page: pathname, lectureSlug: String(lectureNumber) },
+        }
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const data: ChatResponse = await res.json()
+        if (!res.ok || data.error) { setError(data.error ?? 'Что-то пошло не так.'); return }
+        const botMessage: ChatMessage = {
+          id: generateId(),
+          role: 'assistant',
+          content: data.message,
+          timestamp: new Date(),
+          action: data.action,
+        }
+        setMessages((prev) => [...prev, botMessage])
+      } catch {
+        setError('Не удалось связаться с сервером.')
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [messages, isLoading, pathname],
+  )
 
   const showQuickActions = messages.length === 0 && !isLoading
 
@@ -228,7 +282,7 @@ export function ChatWidget() {
               {/* Message list */}
               <AnimatePresence>
                 {messages.map((msg) => (
-                  <ChatMessageComponent key={msg.id} message={msg} />
+                  <ChatMessageComponent key={msg.id} message={msg} onSelectLecture={handleLectureSelect} />
                 ))}
               </AnimatePresence>
 
@@ -258,7 +312,7 @@ export function ChatWidget() {
             {messages.length > 0 && (
               <div className="flex gap-2 border-t border-white/5 px-3 py-2">
                 <button
-                  onClick={() => handleQuickAction(QUICK_ACTIONS[1].prompt)}
+                  onClick={() => handleQuickAction('__QUIZ_PICKER__')}
                   disabled={isLoading}
                   className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-2.5 py-1 text-[11px] text-yellow-300/80 transition-all hover:border-yellow-500/40 hover:bg-yellow-500/10 hover:text-yellow-200 disabled:opacity-40"
                 >
