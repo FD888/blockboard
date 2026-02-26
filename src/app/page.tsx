@@ -10,12 +10,24 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <PipelineSection />
-      <TamperProofDemo />
-      <LectureChain />
-      <MineBlock />
-      <HashInput />
-      <StatsSection />
+      <div className="section-separator">
+        <PipelineSection />
+      </div>
+      <div className="section-separator">
+        <TamperProofDemo />
+      </div>
+      <div className="section-separator">
+        <LectureChain />
+      </div>
+      <div className="section-separator">
+        <MineBlock />
+      </div>
+      <div className="section-separator">
+        <HashInput />
+      </div>
+      <div className="section-separator">
+        <StatsSection />
+      </div>
     </>
   );
 }

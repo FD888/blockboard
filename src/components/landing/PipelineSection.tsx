@@ -154,7 +154,7 @@ export function PipelineSection() {
           className="text-center mb-16"
         >
           <p className="font-mono text-xs text-spbgu-gray-dark mb-3 tracking-widest uppercase">
-            How it works
+            Как это работает
           </p>
           <h2 className="text-fluid-2xl font-bold text-slate-100">
             <TextDecode

@@ -66,6 +66,7 @@ export function Footer() {
               <p>Транскрипции лекций с AI-суммаризацией</p>
             </div>
           </div>
+
         </div>
 
         {/* Bottom Bar */}
