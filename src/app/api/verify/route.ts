@@ -15,6 +15,7 @@ export interface SingleVerifyResult {
   valid: boolean
   category?: 'quiz' | 'explain'
   score?: number          // % для quiz
+  lectureNumber?: number  // номер лекции (только для quiz)
   nonce?: string          // уникальный идентификатор — дубли видны сразу
   duplicate?: boolean     // true если nonce уже встречался в батче
 }
@@ -24,6 +25,7 @@ export interface VerifyResponse {
   valid?: boolean
   category?: 'quiz' | 'explain'
   score?: number
+  lectureNumber?: number
   nonce?: string
   /** Результаты пакетной проверки */
   results?: SingleVerifyResult[]
@@ -63,6 +65,7 @@ export async function POST(req: NextRequest) {
         valid: true,
         category: result.category,
         score: result.score,
+        lectureNumber: result.lectureNumber,
         nonce: result.nonce,
         duplicate: isDuplicate,
       }
@@ -78,6 +81,7 @@ export async function POST(req: NextRequest) {
       valid: result.valid,
       category: result.category,
       score: result.score,
+      lectureNumber: result.lectureNumber,
       nonce: result.nonce,
     } satisfies VerifyResponse)
   }
@@ -99,6 +103,7 @@ export async function GET(req: NextRequest) {
     valid: result.valid,
     category: result.category,
     score: result.score,
+    lectureNumber: result.lectureNumber,
     nonce: result.nonce,
   } satisfies VerifyResponse)
 }

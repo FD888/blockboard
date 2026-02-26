@@ -10,25 +10,53 @@ interface VerifyResult {
   valid: boolean
   category?: 'quiz' | 'explain'
   score?: number
+  lectureNumber?: number
   nonce?: string
   duplicate?: boolean
+}
+
+const TOTAL_LECTURES = 3
+const LECTURE_LABELS: Record<number, string> = {
+  2: 'Технология блокчейн',
+  3: 'Майнинг и консенсус',
+  4: 'Смарт-контракты и DeFi',
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function activityLabel(r: VerifyResult): string {
   if (!r.valid) return '—'
-  if (r.category === 'quiz') return `Квиз (${r.score}%)`
+  if (r.category === 'quiz') {
+    const lec = r.lectureNumber ? ` Л${r.lectureNumber}` : ''
+    return `Квиз${lec} (${r.score}%)`
+  }
   if (r.category === 'explain') return 'Объяснение'
   return '—'
 }
 
+function lectureCell(r: VerifyResult): string {
+  if (!r.valid || r.category !== 'quiz' || !r.lectureNumber) return '—'
+  return `Л${r.lectureNumber}`
+}
+
+/** Считает уникальные лекции из валидных (не-дублей) квиз-токенов */
+function countUniqueLectures(results: VerifyResult[]): number {
+  const lectures = new Set<number>()
+  results.forEach((r) => {
+    if (r.valid && !r.duplicate && r.category === 'quiz' && r.lectureNumber) {
+      lectures.add(r.lectureNumber)
+    }
+  })
+  return lectures.size
+}
+
 function exportCSV(results: VerifyResult[]) {
   const rows = [
-    ['Токен', 'Статус', 'Активность', 'Дубль', 'Nonce'],
+    ['Токен', 'Статус', 'Лекция', 'Активность', 'Дубль', 'Nonce'],
     ...results.map((r) => [
       r.coin,
       r.valid ? 'OK' : 'INVALID',
+      lectureCell(r),
       activityLabel(r),
       r.duplicate ? 'ДА' : 'нет',
       r.nonce ?? '',
@@ -86,6 +114,7 @@ export function TeacherVerify() {
   const validCount = results?.filter((r) => r.valid && !r.duplicate).length ?? 0
   const invalidCount = results?.filter((r) => !r.valid).length ?? 0
   const dupCount = results?.filter((r) => r.duplicate).length ?? 0
+  const uniqueLectureCount = results ? countUniqueLectures(results) : 0
 
   return (
     <div className="min-h-screen bg-[#0a0e1a] px-4 py-12">
@@ -107,7 +136,8 @@ export function TeacherVerify() {
 
         {/* Инструкция */}
         <div className="mb-6 rounded-xl border border-white/8 bg-white/3 p-4 text-xs text-gray-400 space-y-1">
-          <p><span className="text-yellow-400 font-medium">Формат токена:</span> <code className="font-mono text-yellow-200/80">HK1:a3f9b2c1:quiz-90:7e4cd1f2a9b3</code></p>
+          <p><span className="text-yellow-400 font-medium">Формат токена:</span> <code className="font-mono text-yellow-200/80">HK1:a3f9b2c1:quiz-L2-86:7e4cd1f2a9b3</code></p>
+          <p className="text-gray-500">quiz-L<span className="text-yellow-200/60">N</span>-<span className="text-yellow-200/60">score</span> — N = номер лекции (2, 3, 4), score = % правильных ответов</p>
           <p><span className="text-green-400 font-medium">✅ Подлинный</span> — HMAC-подпись верна, токен выдан сервером</p>
           <p><span className="text-red-400 font-medium">❌ Недействительный</span> — подпись не совпадает, токен сфабрикован</p>
           <p><span className="text-orange-400 font-medium">⚠️ Дубль</span> — тот же nonce уже встречался в этой партии</p>
@@ -168,6 +198,45 @@ export function TeacherVerify() {
                 </div>
               </div>
 
+              {/* Охват лекций */}
+              {uniqueLectureCount > 0 && (
+                <div className={`mb-4 rounded-xl border p-4 ${
+                  uniqueLectureCount >= TOTAL_LECTURES
+                    ? 'border-yellow-500/40 bg-yellow-500/10'
+                    : 'border-white/8 bg-white/3'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold text-gray-300">
+                      Квизы по лекциям
+                    </p>
+                    <span className={`text-xs font-bold ${
+                      uniqueLectureCount >= TOTAL_LECTURES ? 'text-yellow-300' : 'text-gray-400'
+                    }`}>
+                      {uniqueLectureCount >= TOTAL_LECTURES ? '🎖 ' : ''}{uniqueLectureCount} из {TOTAL_LECTURES} лекций
+                    </span>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {[2, 3, 4].map((n) => {
+                      const covered = results?.some(
+                        (r) => r.valid && !r.duplicate && r.category === 'quiz' && r.lectureNumber === n
+                      )
+                      return (
+                        <span
+                          key={n}
+                          className={`rounded-full px-3 py-1 text-[10px] font-medium ${
+                            covered
+                              ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                              : 'bg-white/5 text-gray-600 border border-white/8'
+                          }`}
+                        >
+                          {covered ? '✓ ' : ''}Л{n} · {LECTURE_LABELS[n]}
+                        </span>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Кнопка экспорта */}
               <div className="mb-4 flex justify-end">
                 <button
@@ -185,6 +254,7 @@ export function TeacherVerify() {
                     <tr className="border-b border-white/8 bg-white/3">
                       <th className="px-4 py-2 text-left font-semibold text-gray-400">#</th>
                       <th className="px-4 py-2 text-left font-semibold text-gray-400">Токен</th>
+                      <th className="px-3 py-2 text-left font-semibold text-gray-400">Лекция</th>
                       <th className="px-4 py-2 text-left font-semibold text-gray-400">Активность</th>
                       <th className="px-4 py-2 text-left font-semibold text-gray-400">Статус</th>
                     </tr>
@@ -204,6 +274,15 @@ export function TeacherVerify() {
                         <td className="px-4 py-2.5 font-mono text-gray-600">{idx + 1}</td>
                         <td className="px-4 py-2.5">
                           <code className="font-mono text-[10px] text-gray-300 break-all">{r.coin}</code>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          {r.valid && r.category === 'quiz' && r.lectureNumber ? (
+                            <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary">
+                              Л{r.lectureNumber}
+                            </span>
+                          ) : (
+                            <span className="text-gray-600">—</span>
+                          )}
                         </td>
                         <td className="px-4 py-2.5 text-gray-300">{activityLabel(r)}</td>
                         <td className="px-4 py-2.5">

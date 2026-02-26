@@ -24,7 +24,7 @@ function isRateLimited(ip: string): boolean {
 // ─── Request / response types ─────────────────────────────────────────────────
 
 export type MintRequest =
-  | { activity: 'quiz'; topic: string; score: number; total: number }
+  | { activity: 'quiz'; topic: string; score: number; total: number; lectureNumber: number }
   | { activity: 'explain'; concept: string }
 
 export interface MintResponse {
@@ -56,23 +56,31 @@ export async function POST(req: NextRequest) {
   const date = new Date().toISOString().split('T')[0]
 
   if (body.activity === 'quiz') {
-    const { topic, score, total } = body
+    const { topic, score, total, lectureNumber } = body
 
-    if (!topic || typeof score !== 'number' || typeof total !== 'number' || total <= 0) {
+    if (
+      !topic ||
+      typeof score !== 'number' ||
+      typeof total !== 'number' ||
+      total <= 0 ||
+      typeof lectureNumber !== 'number' ||
+      lectureNumber < 1
+    ) {
       return Response.json({ error: 'Неверные параметры.' }, { status: 400 })
     }
 
     const pct = Math.round((score / total) * 100)
 
-    if (pct < 70) {
+    // Порог: 6 из 7 ≈ 86%
+    if (score < 6) {
       return Response.json(
-        { error: `${pct}% — не прошёл. Нужно ≥70%. Ещё раз.` },
+        { error: `${score}/${total} — не прошёл. Нужно минимум 6 правильных ответов. Ещё раз.` },
         { status: 403 },
       )
     }
 
-    const coin = generateToken(`quiz-${pct}`)
-    const label = `Квиз (${pct}%) · ${topic}`
+    const coin = generateToken(`quiz-L${lectureNumber}-${pct}`)
+    const label = `Квиз Л${lectureNumber} (${pct}%) · ${topic}`
     return Response.json({ coin, label, date } satisfies MintResponse)
   }
 

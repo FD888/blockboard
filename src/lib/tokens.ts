@@ -2,7 +2,7 @@ import { createHmac, randomBytes } from 'crypto'
 
 // ─── HK token format: HK1:{nonce8}:{activity}:{hmac12} ───────────────────────
 // nonce8   — 8 random hex chars (32 bits) — гарантирует уникальность монеты
-// activity — 'quiz-{score}' | 'explain'
+// activity — 'quiz-L{lectureNumber}-{score}' | 'explain'
 // hmac12   — первые 12 hex-символов HMAC-SHA256(SECRET, "{nonce8}:{activity}")
 //
 // Верификация не требует БД: достаточно пересчитать HMAC и сравнить.
@@ -11,7 +11,7 @@ import { createHmac, randomBytes } from 'crypto'
 
 const SECRET = process.env.HODL_SECRET ?? 'hk-blockboard-dev-secret'
 
-export type TokenActivity = `quiz-${number}` | 'explain'
+export type TokenActivity = `quiz-L${number}-${number}` | 'explain'
 
 export interface TokenPayload {
   nonce: string
@@ -26,6 +26,8 @@ export interface VerifyResult {
   category?: 'quiz' | 'explain'
   /** Процент правильных ответов (только для quiz) */
   score?: number
+  /** Номер лекции (только для quiz) */
+  lectureNumber?: number
 }
 
 export function generateToken(activity: TokenActivity): string {
@@ -52,10 +54,18 @@ export function verifyToken(coin: string): VerifyResult {
 
   if (hmac !== expected) return { valid: false }
 
-  const category = activity === 'explain' ? 'explain' : activity.startsWith('quiz-') ? 'quiz' : undefined
+  const category = activity === 'explain' ? 'explain' : activity.startsWith('quiz-L') ? 'quiz' : undefined
   if (!category) return { valid: false }
 
-  const score = category === 'quiz' ? parseInt(activity.replace('quiz-', ''), 10) : undefined
+  let score: number | undefined
+  let lectureNumber: number | undefined
+
+  if (category === 'quiz') {
+    const quizMatch = activity.match(/^quiz-L(\d+)-(\d+)$/)
+    if (!quizMatch) return { valid: false }
+    lectureNumber = parseInt(quizMatch[1], 10)
+    score = parseInt(quizMatch[2], 10)
+  }
 
   return {
     valid: true,
@@ -63,5 +73,6 @@ export function verifyToken(coin: string): VerifyResult {
     nonce,
     category,
     score,
+    lectureNumber,
   }
 }

@@ -5,9 +5,11 @@ import { motion } from 'framer-motion'
 import type { ChatMessage as ChatMessageType, AwardTokenAction } from '@/types/chat'
 import { LectureLink } from './LectureLink'
 import { QuizCard, saveHodlCoin } from './QuizCard'
+import { LectureQuizPicker } from './LectureQuizPicker'
 
 interface ChatMessageProps {
   message: ChatMessageType
+  onSelectLecture?: (lectureNumber: number, lectureTitle: string) => void
 }
 
 // ─── Lightweight markdown renderer ────────────────────────────────────────────
@@ -110,7 +112,7 @@ function TokenCard({ action }: { action: AwardTokenAction }) {
 
 // ─── Main message component ───────────────────────────────────────────────────
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, onSelectLecture }: ChatMessageProps) {
   const isUser = message.role === 'user'
 
   return (
@@ -148,6 +150,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
         {!isUser && message.action?.type === 'navigate' && <LectureLink action={message.action} />}
         {!isUser && message.action?.type === 'quiz' && <QuizCard action={message.action} />}
         {!isUser && message.action?.type === 'award_token' && <TokenCard action={message.action} />}
+        {!isUser && message.action?.type === 'lecture_quiz_select' && onSelectLecture && (
+          <LectureQuizPicker onSelectLecture={onSelectLecture} />
+        )}
       </div>
     </motion.div>
   )

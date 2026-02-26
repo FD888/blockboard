@@ -56,14 +56,15 @@ const TOOLS = [
       {
         name: 'generate_quiz',
         description:
-          'Сгенерировать тестовые вопросы. Используй ТОЛЬКО когда студент явно просит проверить знания или пройти квиз.',
+          'Сгенерировать тестовые вопросы по конкретной лекции. Используй ТОЛЬКО когда студент явно просит проверить знания или пройти квиз по выбранной лекции. Всегда генерируй ровно 7 вопросов.',
         parameters: {
           type: SchemaType.OBJECT,
           properties: {
             topic: { type: SchemaType.STRING, description: 'Тема теста' },
+            lectureNumber: { type: SchemaType.NUMBER, description: 'Номер лекции (2, 3 или 4)' },
             questions: {
               type: SchemaType.ARRAY,
-              description: 'Вопросы с вариантами ответов',
+              description: 'Ровно 7 вопросов с вариантами ответов',
               items: {
                 type: SchemaType.OBJECT,
                 properties: {
@@ -76,7 +77,7 @@ const TOOLS = [
               },
             },
           },
-          required: ['topic', 'questions'],
+          required: ['topic', 'lectureNumber', 'questions'],
         },
       },
       {
@@ -145,10 +146,10 @@ async function callGemini(
     }
 
     if (name === 'generate_quiz') {
-      const { topic, questions } = args as { topic: string; questions: QuizQuestion[] }
+      const { topic, questions, lectureNumber } = args as { topic: string; questions: QuizQuestion[]; lectureNumber?: number }
       return {
         message: response.text() || `Вот тест по теме «${topic}»:`,
-        action: { type: 'quiz', topic, questions },
+        action: { type: 'quiz', topic, questions, lectureNumber },
       }
     }
 
