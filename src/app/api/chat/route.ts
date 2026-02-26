@@ -231,9 +231,39 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Некорректный запрос.' }, { status: 400 })
   }
 
-  const { messages, context } = body
+  const { messages, context, directQuiz } = body
   if (!messages?.length) {
     return Response.json({ error: 'Сообщения не переданы.' }, { status: 400 })
+  }
+
+  // Когда лекция выбрана явно — строим одиночный запрос без истории,
+  // чтобы модель не рассуждала, а сразу вызвала generate_quiz
+  if (directQuiz) {
+    const { lectureNumber, lectureTitle } = directQuiz
+    const rag = getRagContext(lectureTitle, String(lectureNumber))
+    const systemPrompt = buildSystemPrompt(rag, context?.page ?? '/')
+    const forcedMessages: ChatRequest['messages'] = [
+      {
+        role: 'user',
+        content:
+          `Сгенерируй квиз из ровно 7 вопросов по Лекции ${lectureNumber}: «${lectureTitle}». ` +
+          `Тема квиза: «${lectureTitle}». Номер лекции: ${lectureNumber}. ` +
+          `Обязательно вызови функцию generate_quiz с lectureNumber=${lectureNumber}.`,
+      },
+    ]
+    let result: ChatResponse
+    try {
+      result = await callGemini(systemPrompt, forcedMessages, ip)
+    } catch (geminiError) {
+      console.error('Gemini failed (directQuiz):', geminiError)
+      try {
+        result = await callGroq(systemPrompt, forcedMessages)
+      } catch (groqError) {
+        console.error('Groq also failed (directQuiz):', groqError)
+        return Response.json({ error: 'Сервис временно недоступен. Попробуй позже.' }, { status: 503 })
+      }
+    }
+    return Response.json(result)
   }
 
   const lastUserMessage = messages.findLast((m) => m.role === 'user')?.content ?? ''

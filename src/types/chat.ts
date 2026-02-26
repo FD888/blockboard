@@ -57,6 +57,11 @@ export interface ChatRequest {
     page: string
     lectureSlug?: string
   }
+  /** Когда студент явно выбрал лекцию через пикер — генерировать квиз напрямую без рассуждений */
+  directQuiz?: {
+    lectureNumber: number
+    lectureTitle: string
+  }
 }
 
 export interface ChatResponse {
