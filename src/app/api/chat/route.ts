@@ -121,10 +121,17 @@ async function callGemini(
     generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
   })
 
-  const history = messages.slice(0, -1).map((m) => ({
+  const historyRaw = messages.slice(0, -1).map((m) => ({
     role: m.role === 'user' ? 'user' : 'model',
     parts: [{ text: m.content }],
   }))
+
+  // Gemini requires history to start with 'user' role — drop leading model messages
+  let startIdx = 0
+  while (startIdx < historyRaw.length && historyRaw[startIdx].role === 'model') {
+    startIdx++
+  }
+  const history = historyRaw.slice(startIdx)
 
   const lastMessage = messages[messages.length - 1]
   const chat = model.startChat({ history })
