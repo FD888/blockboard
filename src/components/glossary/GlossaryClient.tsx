@@ -16,6 +16,8 @@ const LECTURE_COLORS: Record<number, string> = {
   2: "text-primary border-primary/30 bg-primary/10",
   3: "text-secondary border-secondary/30 bg-secondary/10",
   4: "text-slate-300 border-slate-600/30 bg-slate-700/10",
+  5: "text-violet-400 border-violet-500/30 bg-violet-500/10",
+  6: "text-amber-400 border-amber-500/30 bg-amber-500/10",
 };
 
 export function GlossaryClient({ entries }: Props) {
